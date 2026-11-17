@@ -1,0 +1,5 @@
+/* Web only: base font fallbacks. Native fonts are loaded with useFonts in the root layout. */
+:root {
+  --font-latin: 'IBMPlexSans_400Regular', system-ui, sans-serif;
+  --font-arabic: 'IBMPlexSansArabic_400Regular', system-ui, sans-serif;
+}

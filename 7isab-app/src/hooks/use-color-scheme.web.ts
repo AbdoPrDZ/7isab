@@ -1,0 +1,19 @@
+import { useSyncExternalStore } from 'react';
+import { useColorScheme as useRNColorScheme } from 'react-native';
+
+const subscribe = () => () => {};
+
+/**
+ * Web: server rendering has no color scheme, so render light first and
+ * switch to the real scheme once hydrated on the client.
+ */
+export function useColorScheme() {
+  const hydrated = useSyncExternalStore(
+    subscribe,
+    () => true,
+    () => false,
+  );
+  const colorScheme = useRNColorScheme();
+
+  return hydrated ? colorScheme : 'light';
+}

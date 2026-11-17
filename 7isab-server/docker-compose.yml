@@ -1,0 +1,41 @@
+# 7isab server + PostgreSQL.
+#   cp .env.example .env    then set APP_KEY, DB_PASSWORD and SUPER_ADMIN_* (see README.md)
+#   docker compose up -d --build
+#   docker compose exec app php artisan quran:import    (once)
+services:
+  app:
+    build: .
+    image: 7isab-server
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      DB_CONNECTION: pgsql
+      DB_HOST: db
+      DB_PORT: 5432
+      LOG_CHANNEL: stderr
+    ports:
+      - "${APP_PORT:-8000}:80"
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - storage:/var/www/html/storage
+
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_DATABASE:-hisab}
+      POSTGRES_USER: ${DB_USERNAME:-hisab}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD in .env}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  storage:
+  pgdata:

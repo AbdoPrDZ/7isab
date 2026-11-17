@@ -1,0 +1,55 @@
+@import 'tailwindcss';
+
+@source '../js/admin';
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* Same tokens as the app: emerald, gold, ivory / night green. */
+@theme {
+    --font-latin: 'IBM Plex Sans', ui-sans-serif, system-ui, sans-serif;
+    --font-arabic: 'IBM Plex Sans Arabic', ui-sans-serif, system-ui, sans-serif;
+
+    --color-ivory: #faf7f0;
+    --color-ivory-muted: #f2ede1;
+    --color-line: #e6ddc8;
+    --color-ink: #1b2a24;
+    --color-ink-soft: #5b6b63;
+    --color-emerald: #0f5c45;
+    --color-emerald-dark: #0b4835;
+    --color-emerald-soft: #e3efe9;
+    --color-gold: #c9a227;
+    --color-gold-soft: #f6edcf;
+    --color-danger: #b4473a;
+    --color-danger-soft: #f7e3df;
+
+    --color-night: #0b1512;
+    --color-night-surface: #12201b;
+    --color-night-muted: #182a23;
+    --color-night-line: #22392f;
+    --color-night-ink: #eef2ee;
+    --color-night-ink-soft: #9fb2a8;
+    --color-mint: #2fa67e;
+}
+
+html {
+    font-family: var(--font-latin);
+}
+
+html[lang='ar'] {
+    font-family: var(--font-arabic);
+}
+
+body {
+    background: var(--color-ivory);
+    color: var(--color-ink);
+}
+
+.dark body {
+    background: var(--color-night);
+    color: var(--color-night-ink);
+}
+
+/* Faint eight-point-star pattern for headers. */
+.pattern {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='56' viewBox='0 0 56 56'%3E%3Cpath fill='none' stroke='%23ffffff' stroke-opacity='0.09' d='M28 6l6 16 16 6-16 6-6 16-6-16-16-6 16-6z M28 14l4 10 10 4-10 4-4 10-4-10-10-4 10-4z'/%3E%3C/svg%3E");
+}
