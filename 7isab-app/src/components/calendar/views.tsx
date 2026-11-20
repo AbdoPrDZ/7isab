@@ -9,6 +9,7 @@ import { Fragment } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, View } from 'react-native';
 
+import { openBedtimeSheet } from '@/components/bedtime/bedtime-sheet';
 import { usePrayerFormat } from '@/components/prayer/prayer-format';
 import { openPrayerSheet } from '@/components/prayer/prayer-sheet';
 import { AppText } from '@/components/ui/app-text';
@@ -27,12 +28,20 @@ import {
   type DayTask,
   type TaskState,
 } from '@/lib/calendar/calendar';
+import {
+  bedtimeMark,
+  bedtimeOf,
+  bedtimeState,
+  canMarkNight,
+  getBedtimeTask,
+  useBedtimeSettings,
+} from '@/lib/bedtime/bedtime';
 import { hijriText as hijri, specialDays, type SpecialDay } from '@/lib/calendar/hijri';
 import { today } from '@/lib/dates';
 import { useLedgerLabels } from '@/lib/ledger/hooks';
-import type { Task } from '@/lib/ledger/types';
-import { PRAYERS, prayerTimes, type PrayerSettings } from '@/lib/prayer/prayer';
-import { canMarkPrayer, prayerState } from '@/lib/prayer/tasks';
+import type { Task, TaskProgress } from '@/lib/ledger/types';
+import { prayerNameKey, PRAYERS, prayerTimes, type PrayerSettings } from '@/lib/prayer/prayer';
+import { canMarkPrayer, prayerMark, prayerState } from '@/lib/prayer/tasks';
 
 /** Background for a day by how much was done (sequential, one hue). */
 function useHeat() {
@@ -132,9 +141,17 @@ export function DayView({ day, tasks, prayer }: { day: string; tasks: Task[]; pr
   const { time: clock } = usePrayerFormat();
   const { format } = useLedgerLabels();
   const times = prayerTimes(prayer, day);
-  const items = dayTasks(tasks, day).filter((item) => item.task.kind !== 'prayer');
+  const items = dayTasks(tasks, day).filter((item) => item.task.kind !== 'prayer' && item.task.kind !== 'bedtime');
   const periods = periodTasks(tasks, day);
   const now = new Date();
+  const bedtime = useBedtimeSettings();
+  const bedtimeTask = getBedtimeTask();
+  const night = bedtimeMark(day);
+  /** Place and khushoo of a marked prayer, for its subtitle. */
+  const markDetails = (mark: TaskProgress | null): string[] => [
+    ...(mark?.place ? [t(`prayer.place.${mark.place}`)] : []),
+    ...(mark?.khushoo ? [t('prayer.khushoo.line', { level: t(`prayer.khushoo.${mark.khushoo}`) })] : []),
+  ];
 
   return (
     <>
@@ -175,8 +192,8 @@ export function DayView({ day, tasks, prayer }: { day: string; tasks: Task[]; pr
                 <Fragment key={name}>
                   {index > 0 ? <Divider /> : null}
                   <Row
-                    title={t(`prayer.names.${name}`)}
-                    subtitle={state ? t(`prayer.states.${state}`) : undefined}
+                    title={t(`prayer.names.${prayerNameKey(name, day)}`)}
+                    subtitle={state ? [t(`prayer.states.${state}`), ...markDetails(isPrayer ? prayerMark(name, day) : null)].join(' · ') : undefined}
                     value={clock(times[name])}
                     valueColor={name === 'sunrise' ? 'textSecondary' : 'text'}
                     onPress={canCheck ? () => openPrayerSheet(name, day) : undefined}
@@ -215,6 +232,33 @@ export function DayView({ day, tasks, prayer }: { day: string; tasks: Task[]; pr
           </AppText>
         </Card>
       )}
+
+      {bedtimeTask && !bedtimeTask.archived && day >= bedtimeTask.startDate ? (
+        <Section title={t('bedtime.title')}>
+          <Card>
+            <Row
+              title={t('bedtime.taskTitle')}
+              subtitle={[
+                t('bedtime.bedtimeLine', {
+                  time: clock(bedtimeOf(day, bedtime).at),
+                  until: clock(bedtimeOf(day, bedtime).onTimeUntil),
+                }),
+                ...(night?.sleptAt ? [t('bedtime.sleptAtLine', { time: clock(new Date(night.sleptAt)) })] : []),
+                ...(night?.cause ? [night.cause] : []),
+              ].join(' · ')}
+              value={t(`bedtime.states.${bedtimeState(day, now)}`)}
+              valueColor={
+                bedtimeState(day, now) === 'onTime'
+                  ? 'primary'
+                  : bedtimeState(day, now) === 'late' || bedtimeState(day, now) === 'missed'
+                    ? 'danger'
+                    : 'textSecondary'
+              }
+              onPress={canMarkNight(day, now) ? () => openBedtimeSheet(day) : undefined}
+            />
+          </Card>
+        </Section>
+      ) : null}
 
       <Section title={t('calendar.tasks')}>
         <Card>

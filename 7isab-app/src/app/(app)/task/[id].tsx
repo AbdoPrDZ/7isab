@@ -12,7 +12,11 @@ import { today } from '@/lib/dates';
 import { useDoc, useDocs } from '@/lib/data/vault';
 import { parseAmount } from '@/lib/format';
 import { FASTING_PRESETS, fastingRepeat, NAFILAH_RAKAHS, NAFILAH_TYPES } from '@/lib/ledger/presets';
+import { SwitchRow } from '@/components/prayer/quality-settings';
+import { TaskAlarmField, alarmStateFrom, alarmTimeFrom, type TaskAlarmState } from '@/components/task/task-alarm-field';
+import { getTaskAlarm, saveTaskAlarm } from '@/lib/alarms/alarms';
 import { archiveTask, deleteTask, saveTask } from '@/lib/ledger/tasks';
+import { usePrograms } from '@/lib/programs/programs';
 import {
   RecordTypes,
   type FastingPreset,
@@ -33,13 +37,17 @@ const UNITS_BY_KIND: Record<TaskKind, TaskTarget['unit'][]> = {
   prayer: ['check'],
   nafilah: ['rakahs', 'check'],
   fasting: ['check'],
+  bedtime: ['check'],
 };
+
+/** Made automatically (prayers, bedtime): no kind picker, and the late / missed penalty comes from a sin type. */
+const isAutoKind = (kind: TaskKind) => kind === 'prayer' || kind === 'bedtime';
 
 type BasicRepeat = 'daily' | 'weekdays' | 'weekly' | 'monthly' | 'yearly';
 
 export default function TaskEditorScreen() {
   const { t } = useTranslation();
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id, program: programParam } = useLocalSearchParams<{ id: string; program?: string }>();
   const existing = useDoc<Task>(RecordTypes.task, id === 'new' ? undefined : id);
   useDocs<Task>(RecordTypes.task);
 
@@ -57,6 +65,10 @@ export default function TaskEditorScreen() {
   const [reward, setReward] = useState(String(existing?.reward ?? 1));
   const [penalty, setPenalty] = useState(String(existing?.penalty ?? 1));
   const [athkarList, setAthkarList] = useState<AthkarListId>((existing?.athkarListId as AthkarListId) ?? 'morning');
+  const programs = usePrograms().filter((item) => !item.archived || item.id === existing?.programId);
+  const [programId, setProgramId] = useState<string>(existing?.programId ?? programParam ?? '');
+  const [plain, setPlain] = useState(existing?.plain ?? false);
+  const [alarm, setAlarm] = useState<TaskAlarmState>(alarmStateFrom(existing ? getTaskAlarm(existing.id)?.time : undefined));
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
@@ -99,15 +111,16 @@ export default function TaskEditorScreen() {
 
   const save = async () => {
     const targetAmount = unit === 'check' ? 1 : parseAmount(amount);
-    const rewardValue = parseAmount(reward);
-    const penaltyValue = parseAmount(penalty);
+    const counted = !plain || isAutoKind(kind);
+    const rewardValue = counted ? parseAmount(reward) : 0;
+    const penaltyValue = counted ? parseAmount(penalty) : 0;
     if (!title.trim()) return setError(t('common.nameRequired'));
     if (!targetAmount || targetAmount <= 0 || rewardValue === null || penaltyValue === null)
       return setError(t('common.invalidAmount'));
     if (!presetRepeat && repeatKind === 'weekdays' && !days.length) return setError(t('task.noDays'));
 
     setSaving(true);
-    await saveTask({
+    const saved = await saveTask({
       id: existing?.id,
       title: title.trim(),
       kind,
@@ -121,7 +134,10 @@ export default function TaskEditorScreen() {
       prayer: existing?.prayer,
       nafilah: kind === 'nafilah' ? nafilah : undefined,
       fasting: kind === 'fasting' ? fasting : undefined,
+      programId: !isAutoKind(kind) && programId ? programId : undefined,
+      plain: counted ? undefined : true,
     });
+    if (!isAutoKind(kind)) await saveTaskAlarm(saved, alarmTimeFrom(alarm)).catch(() => undefined);
     router.back();
   };
 
@@ -132,7 +148,10 @@ export default function TaskEditorScreen() {
       {
         text: t('common.delete'),
         style: 'destructive',
-        onPress: () => void deleteTask(existing).then(() => router.back()),
+        onPress: () =>
+          void saveTaskAlarm(existing, null)
+            .then(() => deleteTask(existing))
+            .then(() => router.back()),
       },
     ]);
   };
@@ -150,7 +169,7 @@ export default function TaskEditorScreen() {
         error={error}
       />
 
-      {kind !== 'prayer' ? (
+      {!isAutoKind(kind) ? (
         <Section title={t('task.kind')}>
           <Chips
             options={KINDS.map((value) => ({ value, label: t(`task.kinds.${value}`) }))}
@@ -196,7 +215,7 @@ export default function TaskEditorScreen() {
         </Section>
       ) : null}
 
-      {kind !== 'fasting' ? (
+      {isAutoKind(kind) ? null : kind !== 'fasting' ? (
         <Section title={t('task.targetUnit')}>
           <Chips
             options={UNITS_BY_KIND[kind].map((value) => ({ value, label: t(`task.units.${value}`) }))}
@@ -216,7 +235,7 @@ export default function TaskEditorScreen() {
         <AmountInput label={t('task.amount')} value={amount} onChangeText={setAmount} suffix={t('task.units.days')} />
       ) : null}
 
-      {presetRepeat ? null : (
+      {presetRepeat || isAutoKind(kind) ? null : (
         <Section title={t('task.repeat')}>
           <Chips
             options={REPEATS.map((value) => ({ value, label: t(`task.repeats.${value}`) }))}
@@ -240,24 +259,52 @@ export default function TaskEditorScreen() {
         </Section>
       )}
 
-      <View style={styles.row}>
-        <View style={styles.flex}>
-          <AmountInput label={t('task.reward')} value={reward} onChangeText={setReward} />
-        </View>
-        {kind !== 'prayer' ? (
-          <View style={styles.flex}>
-            <AmountInput label={t('task.penalty')} value={penalty} onChangeText={setPenalty} />
-          </View>
-        ) : null}
-      </View>
-      {kind === 'prayer' ? (
-        <AppText variant="caption" color="textSecondary">
-          {t('task.prayerPenaltyHint')}
-        </AppText>
+      {!isAutoKind(kind) && programs.length ? (
+        <Section title={t('programs.program')}>
+          <Chips
+            options={[
+              { value: '', label: t('programs.none') },
+              ...programs.map((item) => ({ value: item.id, label: item.name })),
+            ]}
+            value={programId}
+            onChange={setProgramId}
+          />
+        </Section>
       ) : null}
-      <AppText variant="caption" color="textSecondary">
-        {t('task.rule')}
-      </AppText>
+
+      {!isAutoKind(kind) ? (
+        <SwitchRow
+          label={t('task.countsInHisab')}
+          hint={plain ? t('task.plainHint') : t('task.countsInHisabHint')}
+          value={!plain}
+          onChange={(on) => setPlain(!on)}
+        />
+      ) : null}
+
+      {!plain || isAutoKind(kind) ? (
+        <>
+          <View style={styles.row}>
+            <View style={styles.flex}>
+              <AmountInput label={t('task.reward')} value={reward} onChangeText={setReward} />
+            </View>
+            {!isAutoKind(kind) ? (
+              <View style={styles.flex}>
+                <AmountInput label={t('task.penalty')} value={penalty} onChangeText={setPenalty} />
+              </View>
+            ) : null}
+          </View>
+          {isAutoKind(kind) ? (
+            <AppText variant="caption" color="textSecondary">
+              {t(kind === 'bedtime' ? 'task.bedtimePenaltyHint' : 'task.prayerPenaltyHint')}
+            </AppText>
+          ) : null}
+          <AppText variant="caption" color="textSecondary">
+            {t('task.rule')}
+          </AppText>
+        </>
+      ) : null}
+
+      {!isAutoKind(kind) ? <TaskAlarmField value={alarm} onChange={setAlarm} /> : null}
 
       {existing ? (
         <View style={styles.row}>
@@ -265,7 +312,11 @@ export default function TaskEditorScreen() {
             title={t('common.archive')}
             variant="secondary"
             style={styles.flex}
-            onPress={() => void archiveTask(existing).then(() => router.back())}
+            onPress={() =>
+              void saveTaskAlarm(existing, null)
+                .then(() => archiveTask(existing))
+                .then(() => router.back())
+            }
           />
           <Button title={t('common.delete')} variant="ghost" style={styles.flex} onPress={remove} />
         </View>

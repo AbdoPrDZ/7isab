@@ -19,7 +19,7 @@ import {
 import { Platform } from 'react-native';
 
 import i18n from '@/i18n';
-import { addDays, today } from '@/lib/dates';
+import { addDays, toDay, today } from '@/lib/dates';
 import { nativeAlarm, nativeSound, type NativeRing } from '@/lib/alarms/native-alarm';
 import { getDoc, getVaultMeta, setVaultMeta } from '@/lib/data/vault';
 import { progressId } from '@/lib/ledger/tasks';
@@ -28,6 +28,7 @@ import { RecordTypes, type PrayerName, type TaskProgress } from '@/lib/ledger/ty
 import {
   getPrayerSettings,
   prayerDeadline,
+  prayerNameKey,
   PRAYERS,
   prayerTaskId,
   prayerTimes,
@@ -218,7 +219,7 @@ function athanRing(id: string, prayer: PrayerName, time: Date, sound: PrayerSoun
   return {
     id,
     time: time.getTime(),
-    title: i18n.t('prayer.athanTitle', { prayer: i18n.t(`prayer.names.${prayer}`) }),
+    title: i18n.t('prayer.athanTitle', { prayer: i18n.t(`prayer.names.${prayerNameKey(prayer, toDay(time))}`) }),
     body: city
       ? i18n.t('prayer.athanBodyCity', { time: clock(time), city })
       : i18n.t('prayer.athanBody', { time: clock(time) }),
@@ -250,7 +251,7 @@ async function scheduleNudges(settings: PrayerSettings, prayer: PrayerName, day:
   if (!times) return;
   const start = times[prayer].getTime();
   const end = deadline?.getTime() ?? null;
-  const name = i18n.t(`prayer.names.${prayer}`);
+  const name = i18n.t(`prayer.names.${prayerNameKey(prayer, day)}`);
   const [checkInId, endingId] = nudgeIds(prayer, day);
 
   const checkInAt = start + settings.checkIn * 60_000;
@@ -328,7 +329,7 @@ export async function reschedulePrayers(force = false): Promise<void> {
         await scheduleNudges(settings, prayer, day, now);
         if (!settings.athan[prayer]) continue;
         const time = times[prayer];
-        const name = i18n.t(`prayer.names.${prayer}`);
+        const name = i18n.t(`prayer.names.${prayerNameKey(prayer, day)}`);
 
         const sound = soundFor(settings, prayer);
         if (time.getTime() > now && athanIsNative(settings, sound)) {

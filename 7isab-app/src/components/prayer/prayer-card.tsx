@@ -14,10 +14,10 @@ import { CheckIcon } from '@/components/ui/icons';
 import { Card } from '@/components/ui/layout';
 import { Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
-import { today } from '@/lib/dates';
+import { toDay, today } from '@/lib/dates';
 import { useDocs } from '@/lib/data/vault';
 import { RecordTypes, type PrayerName, type Task, type TaskProgress } from '@/lib/ledger/types';
-import { nextPrayer, prayerDeadline, PRAYERS, prayerTimes, usePrayerSettings } from '@/lib/prayer/prayer';
+import { nextPrayer, prayerDeadline, prayerNameKey, PRAYERS, prayerTimes, usePrayerSettings } from '@/lib/prayer/prayer';
 import { startPrayers } from '@/lib/prayer/setup';
 import { canMarkPrayer, prayerState } from '@/lib/prayer/tasks';
 
@@ -67,7 +67,7 @@ function PrayerCell({
     <Pressable
       accessibilityRole={enabled ? 'checkbox' : undefined}
       accessibilityState={{ checked: prayed, disabled: !enabled }}
-      accessibilityLabel={`${t(`prayer.names.${prayer}`)} ${clock(time)}${status ? `, ${status}` : ''}`}
+      accessibilityLabel={`${t(`prayer.names.${prayerNameKey(prayer, day)}`)} ${clock(time)}${status ? `, ${status}` : ''}`}
       disabled={!enabled}
       onPress={() => openPrayerSheet(prayer, day)}
       style={[
@@ -83,7 +83,7 @@ function PrayerCell({
         weight="semibold"
         color={state === 'upcoming' ? 'textSecondary' : 'text'}
         numberOfLines={1}>
-        {t(`prayer.names.${prayer}`)}
+        {t(`prayer.names.${prayerNameKey(prayer, day)}`)}
       </AppText>
       <AppText variant="label" weight="bold" numberOfLines={1}>
         {clock(time)}
@@ -173,7 +173,7 @@ export function PrayerCard() {
             {settings.location.city ? ` · ${settings.location.city}` : ''}
           </AppText>
           <AppText variant="heading">
-            {t(`prayer.names.${next.prayer}`)} · {clock(next.time)}
+            {t(`prayer.names.${prayerNameKey(next.prayer, toDay(next.time))}`)} · {clock(next.time)}
           </AppText>
         </View>
         <AppText variant="label" weight="semibold" color="primary">

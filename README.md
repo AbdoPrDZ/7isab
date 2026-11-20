@@ -67,7 +67,7 @@ npm run build && php artisan serve --host=0.0.0.0
 # App (another terminal)
 cd 7isab-app
 npm install
-cp .env.example .env.local        # set EXPO_PUBLIC_API_URL to the server
+cp .env.example .env              # set EXPO_PUBLIC_API_URL to the server
 npx expo run:android              # a development build: the app has native modules
 ```
 

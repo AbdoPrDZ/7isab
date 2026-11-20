@@ -1,4 +1,5 @@
 import { Fragment, useState } from 'react';
+import { useLocalSearchParams } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { Alert, Pressable, StyleSheet, TextInput, View } from 'react-native';
 
@@ -35,8 +36,13 @@ function PenaltyInput({ sin }: { sin: SinType }) {
   );
 }
 
+/**
+ * Sins: logging (from Home) or, with ?mode=edit (from Settings), editing the
+ * types and their penalties.
+ */
 export default function SinsScreen() {
   const { t } = useTranslation();
+  const editing = useLocalSearchParams<{ mode?: string }>().mode === 'edit';
   const theme = useTheme();
   const sinTypes = useSinTypes();
   const entries = useEntries();
@@ -65,66 +71,81 @@ export default function SinsScreen() {
     ]);
 
   return (
-    <Screen back title={t('sins.title')} subtitle={t('sins.subtitle')}>
+    <Screen
+      back
+      title={editing ? t('settingsExtra.sinTypes') : t('sins.title')}
+      subtitle={editing ? t('sins.editHint') : t('sins.subtitle')}>
       <Card>
         {sinTypes.map((sin, index) => (
           <Fragment key={sin.id}>
             {index > 0 ? <Divider /> : null}
-            <Pressable onLongPress={sin.preset ? undefined : () => removeType(sin)} style={styles.sinRow}>
+            <Pressable onLongPress={editing && !sin.preset ? () => removeType(sin) : undefined} style={styles.sinRow}>
               <View style={styles.flex}>
                 <AppText variant="label">{sinName(sin)}</AppText>
                 <AppText variant="caption" color="textSecondary">
                   {t('sins.penalty')}
                 </AppText>
               </View>
-              <PenaltyInput sin={sin} />
-              <Pressable
-                accessibilityRole="button"
-                onPress={() => void log(sin)}
-                style={({ pressed }) => [
-                  styles.logButton,
-                  { backgroundColor: justLogged === sin.id ? theme.accent : pressed ? theme.primaryPressed : theme.primary },
-                ]}>
-                <AppText variant="label" weight="semibold" color="textOnPrimary">
-                  {justLogged === sin.id ? t('sins.logged') : t('sins.log')}
+              {editing ? (
+                <PenaltyInput sin={sin} />
+              ) : (
+                <AppText variant="label" weight="semibold" color="danger">
+                  {format.points(sin.penalty)}
                 </AppText>
-              </Pressable>
+              )}
+              {editing ? null : (
+                <Pressable
+                  accessibilityRole="button"
+                  onPress={() => void log(sin)}
+                  style={({ pressed }) => [
+                    styles.logButton,
+                    { backgroundColor: justLogged === sin.id ? theme.accent : pressed ? theme.primaryPressed : theme.primary },
+                  ]}>
+                  <AppText variant="label" weight="semibold" color="textOnPrimary">
+                    {justLogged === sin.id ? t('sins.logged') : t('sins.log')}
+                  </AppText>
+                </Pressable>
+              )}
             </Pressable>
           </Fragment>
         ))}
       </Card>
 
-      <View style={styles.addRow}>
-        <View style={styles.flex}>
-          <TextField label={t('sins.addType')} placeholder={t('sins.typeName')} value={newName} onChangeText={setNewName} />
+      {editing ? (
+        <View style={styles.addRow}>
+          <View style={styles.flex}>
+            <TextField label={t('sins.addType')} placeholder={t('sins.typeName')} value={newName} onChangeText={setNewName} />
+          </View>
+          <Button title={t('common.add')} variant="secondary" onPress={() => void addType()} style={styles.addButton} />
         </View>
-        <Button title={t('common.add')} variant="secondary" onPress={() => void addType()} style={styles.addButton} />
-      </View>
+      ) : null}
 
-      <Section title={t('sins.recent')}>
-        <Card>
-          {recent.length ? (
-            recent.map((entry, index) => {
-              const sin = sinTypes.find((item) => item.id === entry.sinTypeId);
-              return (
-                <Fragment key={entry.id}>
-                  {index > 0 ? <Divider /> : null}
-                  <Row
-                    title={sin ? sinName(sin) : t('hisab.kinds.sin')}
-                    subtitle={format.day(entry.date)}
-                    value={format.points(entry.lines.find((line) => line.amount > 0)?.amount ?? 0)}
-                    valueColor="danger"
-                  />
-                </Fragment>
-              );
-            })
-          ) : (
-            <AppText variant="label" color="textSecondary" align="center">
-              {t('sins.noRecent')}
-            </AppText>
-          )}
-        </Card>
-      </Section>
+      {editing ? null : (
+        <Section title={t('sins.recent')}>
+          <Card>
+            {recent.length ? (
+              recent.map((entry, index) => {
+                const sin = sinTypes.find((item) => item.id === entry.sinTypeId);
+                return (
+                  <Fragment key={entry.id}>
+                    {index > 0 ? <Divider /> : null}
+                    <Row
+                      title={sin ? sinName(sin) : t('hisab.kinds.sin')}
+                      subtitle={format.day(entry.date)}
+                      value={format.points(entry.lines.find((line) => line.amount > 0)?.amount ?? 0)}
+                      valueColor="danger"
+                    />
+                  </Fragment>
+                );
+              })
+            ) : (
+              <AppText variant="label" color="textSecondary" align="center">
+                {t('sins.noRecent')}
+              </AppText>
+            )}
+          </Card>
+        </Section>
+      )}
     </Screen>
   );
 }

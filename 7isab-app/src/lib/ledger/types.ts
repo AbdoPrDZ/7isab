@@ -24,6 +24,11 @@ export const RecordTypes = {
   zakatState: 'zakat_state',
   prayerSettings: 'prayer_settings',
   alarm: 'alarm',
+  reason: 'reason',
+  reportNote: 'report_note',
+  program: 'program',
+  relapse: 'relapse',
+  statsFilter: 'stats_filter',
 } as const;
 
 export type FixedAccountKey = 'akhira' | 'thanb' | 'sadaqa' | 'zakat' | 'cash';
@@ -54,6 +59,8 @@ export type EntryKind =
   /** A prayer counted as missed / prayed late (Thanb, from the matching sin type). */
   | 'prayer_missed'
   | 'prayer_late'
+  /** Slept after bedtime + grace with a Thanb reason, or the night was never marked (Late bedtime sin type). */
+  | 'bedtime_late'
   | 'sin'
   | 'fast_tap'
   | 'thanb_paid'
@@ -105,9 +112,29 @@ export type Settings = Doc & {
   fastTapStrictness: number;
   /** Daily reminder of the tasks not done yet (null / missing = off). */
   taskReminder?: { hour: number; minute: number } | null;
+  /** Bedtime task (missing = defaults, see lib/bedtime). */
+  bedtime?: BedtimeSettings;
+  /** Report notifications and rating thresholds (missing = defaults, see lib/reports). */
+  reports?: ReportSettings;
 };
 
-export type TaskKind = 'quran' | 'athkar' | 'custom' | 'prayer' | 'nafilah' | 'fasting';
+export type ReportPeriod = 'day' | 'week' | 'month' | 'year';
+
+export type ReportSettings = {
+  /** Time of the report notifications. */
+  hour: number;
+  minute: number;
+  /** Which reports notify (each on its period's last day). */
+  notify: Record<ReportPeriod, boolean>;
+  /** Score thresholds, in %. */
+  goodAt: number;
+  normalAt: number;
+};
+
+/** Bedtime: on time when asleep by hour:minute + grace minutes. */
+export type BedtimeSettings = { enabled: boolean; hour: number; minute: number; grace: number };
+
+export type TaskKind = 'quran' | 'athkar' | 'custom' | 'prayer' | 'nafilah' | 'fasting' | 'bedtime';
 /** Voluntary prayers. */
 export type NafilahType = 'rawatib' | 'duha' | 'witr' | 'qiyam' | 'tahajjud' | 'other';
 /** Fasting presets; each sets the days the task is due. */
@@ -153,7 +180,33 @@ export type Task = Doc & {
   prayer?: PrayerName;
   nafilah?: NafilahType;
   fasting?: FastingPreset;
+  /** The program this task belongs to (at most one). */
+  programId?: string;
+  /** Plain task: never counted in the hisab (no reward, no penalty) and never in a rating. */
+  plain?: boolean;
 };
+
+/** improving / healing are translated; custom uses `customCategory`. */
+export type ProgramCategory = 'improving' | 'healing' | 'custom';
+
+/**
+ * A plan (improving, healing from a habit, or a custom category) with its own
+ * tasks. Healing programs also track clean days and relapses.
+ */
+export type Program = Doc & {
+  name: string;
+  category: ProgramCategory;
+  customCategory?: string;
+  goal?: string;
+  startDate: string;
+  /** Last day (YYYY-MM-DD), or none for an open-ended program. */
+  endDate?: string | null;
+  /** Finished or stopped: kept with its history, no longer shown as active. */
+  archived?: boolean;
+};
+
+/** A relapse in a healing program; with `thanb`, a "Relapse" Thanb entry (id fixed from the relapse). */
+export type Relapse = Doc & { programId: string; date: string; note?: string; thanb: boolean };
 
 /** Progress of one task on one day (for period tasks, date = the period's first day). Id = stable(taskId + date). */
 export type TaskProgress = Doc & {
@@ -168,12 +221,35 @@ export type TaskProgress = Doc & {
   combinedWith?: PrayerName;
   /** Prayers: when it was prayed (ms); decides on time / late against its safe time. */
   prayedAt?: number;
+  /** Prayers: khushoo level (weak adds a Thanb). */
+  khushoo?: Khushoo;
+  /** Prayers: where it was prayed. */
+  place?: PrayerPlace;
+  /** Prayers at home: the reason picked (a Reason id) and its text at the time. */
+  placeReasonId?: string;
+  placeReason?: string;
+  /** Bedtime: when the user went to sleep (ms). */
+  sleptAt?: number;
+  /** Bedtime when late: the reason picked (a Reason id); its text is in `cause`. */
+  reasonId?: string;
 };
+
+export type Khushoo = 'good' | 'normal' | 'weak';
+export type PrayerPlace = 'mosque' | 'home';
 
 /** onTime: in its time (or marked later as such); late: after its time (qada); combined: jam' with its pair. */
 export type PrayerStatus = 'onTime' | 'late' | 'combined';
 
 export type SinType = Doc & { name: string; penalty: number; order: number; preset?: string };
+
+/** Where a reason list is used. */
+export type ReasonScope = 'homePrayer' | 'bedtime';
+
+/**
+ * A reason the user picks (e.g. why a prayer was prayed at home). Presets are
+ * translated by key; `thanb` decides whether picking it adds a Thanb.
+ */
+export type Reason = Doc & { scope: ReasonScope; name: string; preset?: string; thanb: boolean; order: number };
 
 /** 1 unit of `currency` = `rate` units of the main currency. Gold uses currency "XAU_G" (per gram). */
 export type ExchangeRate = Doc & { currency: string; rate: number };

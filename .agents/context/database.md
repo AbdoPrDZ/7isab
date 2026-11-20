@@ -6,7 +6,7 @@
 - Migrations: an ordered list in `lib/data/database.ts`, tracked with `PRAGMA user_version`.
 - **All reads come from memory:** `vault.ts` decrypts every record once when it opens; screens use `useDocs(type)` / `useDoc(type, id)`.
 - **All writes go through one queue** (`serialized()` in `vault.ts`): expo-sqlite transactions share one connection, so overlapping writes fail with "cannot start a transaction within a transaction".
-- Record types are listed in `RecordTypes` (`lib/ledger/types.ts`): settings, account, entry, task, progress, sin_type, exchange_rate, category, budget, goal, recurring, reading, reading_day, athkar, athkar_day, zakat_state, prayer_settings, alarm.
+- Record types are listed in `RecordTypes` (`lib/ledger/types.ts`): settings, account, entry, task, progress, sin_type, exchange_rate, category, budget, goal, recurring, reading, reading_day, athkar, athkar_day, zakat_state, prayer_settings, alarm, reason (editable reason lists with a Thanb flag, per scope: `homePrayer`, `bedtime`; `lib/ledger/reasons.ts`). Bedtime settings live on `settings.bedtime`, report settings on `settings.reports`. Also report_note (private note per report, id from period + start), program (with `task.programId`), relapse (healing programs), stats_filter (saved statistics filters). Task alarms are ordinary alarm records with a taskId.
 - `progress` of a prayer also stores how it was prayed: `status` (onTime / late / combined), `cause`, `combinedWith`, `prayedAt`.
 - Device-only vault meta (not synced): `prayer_schedule`, `alarm_schedule` (schedule signatures), `prayer_location_check`.
 - Every record has `id`, `createdAt`, `updatedAt` in its payload (`Doc`).

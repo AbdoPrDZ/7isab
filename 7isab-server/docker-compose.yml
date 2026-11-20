@@ -1,41 +1,91 @@
-# 7isab server + PostgreSQL.
-#   cp .env.example .env    then set APP_KEY, DB_PASSWORD and SUPER_ADMIN_* (see README.md)
-#   docker compose up -d --build
-#   docker compose exec app php artisan quran:import    (once)
-services:
-  app:
-    build: .
-    image: 7isab-server
-    restart: unless-stopped
-    env_file: .env
-    environment:
-      DB_CONNECTION: pgsql
-      DB_HOST: db
-      DB_PORT: 5432
-      LOG_CHANNEL: stderr
-    ports:
-      - "${APP_PORT:-8000}:80"
-    depends_on:
-      db:
-        condition: service_healthy
-    volumes:
-      - storage:/var/www/html/storage
+# 7isab server container stack.
+#
+# Configuration lives in `.env.docker` (see .env.docker.example):
+#   cp .env.docker.example .env.docker
+#   docker compose --env-file .env.docker up -d --build
+#   docker compose --env-file .env.docker exec app php artisan quran:import   # once: the Quran text
+#
+# `.env.docker` is passed to every container as env_file, and --env-file makes
+# Compose interpolate ${...} from that same file, so APP_PORT and the database
+# credentials always match what the app reads. Run `export COMPOSE_ENV_FILES=.env.docker`
+# once to stop repeating the flag. Without it Compose falls back to `.env` and
+# then to the defaults below — which mirror `.env.docker.example`.
+#
+# Anything set in a service's `environment:` block below overrides `.env.docker`.
+name: 7isab
 
-  db:
-    image: postgres:17-alpine
-    restart: unless-stopped
+# Shared service definition (image, env file, storage volume).
+x-app: &app
+  image: ghcr.io/abdoprdz/7isab-server:latest
+  build:
+    context: .
+  restart: unless-stopped
+  env_file:
+    - path: .env.docker
+      required: false
+  volumes:
+    - 7isab-storage:/var/www/html/storage
+
+# Shared environment. Container-level values override anything in .env.docker.
+x-environment: &app-env
+  APP_ENV: production
+  APP_DEBUG: "false"
+  APP_URL: ${APP_URL:-http://localhost:8000}
+  LOG_CHANNEL: stderr
+  DB_CONNECTION: pgsql
+  DB_HOST: it-pg-db
+  DB_PORT: "5432"
+  DB_DATABASE: ${DB_DATABASE:-hisab}
+  DB_USERNAME: ${DB_USERNAME:-hisab}
+  DB_PASSWORD: ${DB_PASSWORD:-secret}
+  SESSION_DRIVER: file
+  CACHE_STORE: file
+  QUEUE_CONNECTION: sync
+  # The host nginx terminates TLS; trust its X-Forwarded-* headers so URLs are https.
+  # Safe because the container is only published on 127.0.0.1.
+  TRUSTED_PROXIES: "*"
+
+services:
+  # nginx + php-fpm. The entrypoint migrates, seeds and caches on every start.
+  app:
+    <<: *app
     environment:
-      POSTGRES_DB: ${DB_DATABASE:-hisab}
-      POSTGRES_USER: ${DB_USERNAME:-hisab}
-      POSTGRES_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD in .env}
-    volumes:
-      - pgdata:/var/lib/postgresql/data
+      <<: *app-env
+    ports:
+      - "127.0.0.1:${APP_PORT:-8080}:80"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
-      interval: 5s
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1/up > /dev/null || exit 1"]
+      interval: 10s
       timeout: 5s
-      retries: 10
+      retries: 6
+      start_period: 30s
+    # depends_on:
+    #   db:
+    #     condition: service_healthy
+    networks:
+      - it-db-net
+
+#   # Optional local database. The app uses the shared `it-pg-db` on `it-db-net`;
+#   # to use this one instead, set DB_HOST: db, put it on it-db-net and enable depends_on.
+#   db:
+#     image: postgres:17-alpine
+#     restart: unless-stopped
+#     environment:
+#       POSTGRES_DB: ${DB_DATABASE:-hisab}
+#       POSTGRES_USER: ${DB_USERNAME:-hisab}
+#       POSTGRES_PASSWORD: ${DB_PASSWORD:-secret}
+#     volumes:
+#       - 7isab-db:/var/lib/postgresql/data
+#     healthcheck:
+#       test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+#       interval: 5s
+#       timeout: 5s
+#       retries: 12
 
 volumes:
-  storage:
-  pgdata:
+  7isab-storage:
+  7isab-db:
+
+networks:
+  it-db-net:
+    external: true

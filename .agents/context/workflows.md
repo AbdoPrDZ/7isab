@@ -28,7 +28,7 @@ Run the typecheck and lint before calling a task done.
 
 ## OTA updates (self-hosted OTA server)
 1. **Server setup:**
-   - The app on the OTA server must use the package name `com.abdopr.hisab`.
+   - The app on the OTA server must use the package name `com.abdopr.apps.hisab`.
    - Its version name must equal `runtimeVersion` in `app.json` (currently `1.0.0`).
    - The server URL and the version's API key go in `7isab-app/.env.local` as `OTA_SERVER_URL` and `OTA_API_KEY`. Never put them in `app.json` or any committed file. Without them, `app.config.js` leaves the OTA plugin out.
 2. **Check:** `npx expo-ota-client doctor`.

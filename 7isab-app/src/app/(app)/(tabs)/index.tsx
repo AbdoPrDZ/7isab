@@ -2,11 +2,13 @@ import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, View } from 'react-native';
 
+import { BedtimeCard } from '@/components/bedtime/bedtime-card';
+import { HisabQuickActions, NegativeWarnings } from '@/components/hisab/quick-actions';
 import { PrayerCard } from '@/components/prayer/prayer-card';
 import { AppText } from '@/components/ui/app-text';
 import { Button } from '@/components/ui/button';
 import { AlarmIcon, BookIcon, CalendarIcon, CheckIcon, MinusIcon, PlusIcon, SettingsIcon } from '@/components/ui/icons';
-import { Card, IconButton, Screen, Section, SectionAction } from '@/components/ui/layout';
+import { Card, Divider, IconButton, Row, Screen, Section, SectionAction } from '@/components/ui/layout';
 import { Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { usePrayerFormat } from '@/components/prayer/prayer-format';
@@ -126,7 +128,7 @@ export default function TodayScreen() {
   const reading = useReadingState();
   const day = today();
   // Prayer tasks are checked on the prayer card.
-  const dueTasks = tasks.filter((task) => isDue(task, day) && task.kind !== 'prayer');
+  const dueTasks = tasks.filter((task) => isDue(task, day) && task.kind !== 'prayer' && task.kind !== 'bedtime');
   const fixed = accounts.filter((account) => account.fixed);
 
   const greeting = t(greetingKey());
@@ -152,7 +154,14 @@ export default function TodayScreen() {
         </View>
       }>
       <PrayerCard />
+      <BedtimeCard />
+      <Card>
+        <Row title={t('report.todayReport')} subtitle={t('report.todayReportHint')} chevron onPress={() => router.push('/report')} />
+        <Divider />
+        <Row title={t('programs.title')} subtitle={t('programs.todayHint')} chevron onPress={() => router.push('/programs')} />
+      </Card>
 
+      <NegativeWarnings />
       <Section title={t('today.balances')}>
         <View style={styles.balances}>
           {fixed.map((account) => {
@@ -162,7 +171,7 @@ export default function TodayScreen() {
               <Pressable
                 key={account.id}
                 accessibilityRole="button"
-                onPress={() => router.push('/hisab')}
+                onPress={() => router.push({ pathname: '/stats', params: { section: 'akhira' } })}
                 style={[
                   styles.balance,
                   {
@@ -181,6 +190,8 @@ export default function TodayScreen() {
           })}
         </View>
       </Section>
+
+      <HisabQuickActions />
 
       {reading ? (
         <Card tone="accent">

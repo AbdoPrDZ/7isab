@@ -25,7 +25,7 @@ type AuthShellProps = {
 export function AuthShell({ title, subtitle, children, footer }: AuthShellProps) {
   const theme = useTheme();
   const { t } = useTranslation();
-  const { direction, isRtl } = useDirection();
+  const { direction } = useDirection();
   const insets = useSafeAreaInsets();
 
   return (
@@ -48,12 +48,9 @@ export function AuthShell({ title, subtitle, children, footer }: AuthShellProps)
                 resizeMode="contain"
                 accessibilityIgnoresInvertColors
               />
-              {/* The emblem already reads "حساب"; spell the name out for other languages. */}
-              {isRtl ? null : (
-                <AppText variant="title" color="onHero" align="center">
-                  {t('app.name')}
-                </AppText>
-              )}
+              <AppText variant="title" color="onHero" align="center">
+                {t('app.name')}
+              </AppText>
               <AppText variant="label" color="onHeroMuted" align="center">
                 {t('app.tagline')}
               </AppText>
@@ -111,8 +108,8 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
   },
   emblem: {
-    width: 112,
-    height: 112,
+    width: 136,
+    height: 136,
     marginBottom: Spacing.one,
   },
   body: {

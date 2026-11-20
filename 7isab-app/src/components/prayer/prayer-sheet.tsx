@@ -7,7 +7,7 @@
  */
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { KeyboardAvoidingView, Modal, Platform, Pressable, StyleSheet, View } from 'react-native';
+import { KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { create } from 'zustand';
 
@@ -21,20 +21,23 @@ import { useTheme } from '@/hooks/use-theme';
 import { today } from '@/lib/dates';
 import { useDocs } from '@/lib/data/vault';
 import { useLedgerLabels } from '@/lib/ledger/hooks';
-import { RecordTypes, type PrayerName, type TaskProgress } from '@/lib/ledger/types';
-import { prayerTimes, usePrayerSettings } from '@/lib/prayer/prayer';
+import { RecordTypes, type Khushoo, type PrayerName, type PrayerPlace, type TaskProgress } from '@/lib/ledger/types';
+import { prayerNameKey, prayerTimes, usePrayerSettings } from '@/lib/prayer/prayer';
 import {
   canMarkPrayer,
+  combinePair,
   combineTiming,
-  COMBINE_PAIRS,
   markPrayer,
   prayedAtFor,
   prayerMark,
   prayerTiming,
+  setPrayerQuality,
   unmarkPrayer,
+  type PrayerQuality,
 } from '@/lib/prayer/tasks';
 
 import { usePrayerFormat } from './prayer-format';
+import { KhushooPicker, PlacePicker, qualityComplete } from './prayer-quality';
 
 type SheetState = { prayer: PrayerName | null; day: string };
 
@@ -74,14 +77,39 @@ function SheetBody({ prayer, day }: { prayer: PrayerName; day: string }) {
   const [failed, setFailed] = useState(false);
 
   const mark = prayerMark(prayer, day);
-  const pair = COMBINE_PAIRS[prayer];
+  const [khushoo, setKhushoo] = useState<Khushoo | undefined>(mark?.khushoo);
+  const [pairKhushoo, setPairKhushoo] = useState<Khushoo | undefined>();
+  const [place, setPlace] = useState<PrayerPlace | undefined>(mark?.place);
+  const [reasonId, setReasonId] = useState<string | undefined>(mark?.placeReasonId);
+  const [editing, setEditing] = useState(false);
+
+  const pair = combinePair(prayer, day);
   const canCombine = !!pair && prayerMark(pair, day) === null;
   const ownTimeStarted = !!time && time <= now;
-  const name = t(`prayer.names.${prayer}`);
+  const name = t(`prayer.names.${prayerNameKey(prayer, day)}`);
+  const pairName = pair ? t(`prayer.names.${pair}`) : '';
   const at = prayedAtFor(prayer, day, hour, minute);
   const timing = step === 'combine' ? combineTiming(prayer, day, at, now) : prayerTiming(prayer, day, at, now);
   const late = timing.ok && timing.status === 'late';
-  const canSave = timing.ok && (!late || cause.trim().length > 0);
+  const quality: PrayerQuality = {
+    khushoo: settings.askKhushoo ? khushoo : undefined,
+    place: settings.askPlace ? place : undefined,
+    placeReasonId: settings.askPlace && place === 'home' ? reasonId : undefined,
+  };
+  const canSave = timing.ok && (!late || cause.trim().length > 0) && qualityComplete(quality);
+
+  const placeInput = settings.askPlace ? (
+    <PlacePicker
+      prayer={prayer}
+      day={day}
+      place={place}
+      reasonId={reasonId}
+      onChange={(value, reason) => {
+        setPlace(value);
+        setReasonId(reason);
+      }}
+    />
+  ) : null;
 
   const run = async (action: () => Promise<void>) => {
     setBusy(true);
@@ -195,7 +223,35 @@ function SheetBody({ prayer, day }: { prayer: PrayerName; day: string }) {
                 {t('prayer.causeLine', { cause: mark.cause })}
               </AppText>
             ) : null}
+            {mark.khushoo ? (
+              <AppText variant="caption" color="textSecondary" align="center">
+                {t('prayer.khushoo.line', { level: t(`prayer.khushoo.${mark.khushoo}`) })}
+              </AppText>
+            ) : null}
+            {mark.place ? (
+              <AppText variant="caption" color="textSecondary" align="center">
+                {mark.place === 'home' && mark.placeReason
+                  ? t('prayer.place.lineHome', { reason: mark.placeReason })
+                  : t(`prayer.place.${mark.place}`)}
+              </AppText>
+            ) : null}
           </View>
+          {editing ? (
+            <>
+              {settings.askKhushoo ? (
+                <KhushooPicker label={t('prayer.khushoo.question')} value={khushoo} onChange={setKhushoo} />
+              ) : null}
+              {placeInput}
+              <Button
+                title={t('prayer.saveQuality')}
+                disabled={!qualityComplete(quality)}
+                loading={busy}
+                onPress={() => void run(() => setPrayerQuality(prayer, day, quality))}
+              />
+            </>
+          ) : settings.askKhushoo || settings.askPlace ? (
+            <Button title={t('prayer.editQuality')} variant="secondary" onPress={() => setEditing(true)} />
+          ) : null}
           <Button
             title={mark.combinedWith ? t('prayer.unmarkBoth') : t('prayer.unmark')}
             variant="secondary"
@@ -215,15 +271,19 @@ function SheetBody({ prayer, day }: { prayer: PrayerName; day: string }) {
               <TextField label={t('prayer.causeLabel')} value={cause} onChangeText={setCause} />
             </>
           ) : null}
+          {settings.askKhushoo ? (
+            <KhushooPicker label={t('prayer.khushoo.question')} value={khushoo} onChange={setKhushoo} />
+          ) : null}
+          {placeInput}
           <Button
             title={late ? t('prayer.saveLate') : t('prayer.saveOnTime')}
             disabled={!canSave}
             loading={busy}
-            onPress={() => void run(() => markPrayer(prayer, day, at, { cause }))}
+            onPress={() => void run(() => markPrayer(prayer, day, at, { cause, quality }))}
           />
           {canCombine && canMarkPrayer(prayer, day, now) ? (
             <Button
-              title={t('prayer.combineWith', { other: t(`prayer.names.${pair}`) })}
+              title={t('prayer.combineWith', { other: pairName })}
               variant="secondary"
               onPress={() => {
                 setCause('');
@@ -235,7 +295,7 @@ function SheetBody({ prayer, day }: { prayer: PrayerName; day: string }) {
       ) : canCombine ? (
         <>
           <AppText variant="label" weight="semibold">
-            {t('prayer.combineTitle', { a: name, b: pair ? t(`prayer.names.${pair}`) : '' })}
+            {t('prayer.combineTitle', { a: name, b: pairName })}
           </AppText>
           <AppText variant="caption" color="textSecondary">
             {t('prayer.combineHint')}
@@ -247,11 +307,31 @@ function SheetBody({ prayer, day }: { prayer: PrayerName; day: string }) {
             value={cause}
             onChangeText={setCause}
           />
+          {settings.askKhushoo ? (
+            <>
+              <KhushooPicker label={t('prayer.khushoo.questionFor', { prayer: name })} value={khushoo} onChange={setKhushoo} />
+              <KhushooPicker
+                label={t('prayer.khushoo.questionFor', { prayer: pairName })}
+                value={pairKhushoo}
+                onChange={setPairKhushoo}
+              />
+            </>
+          ) : null}
+          {placeInput}
           <Button
             title={late ? t('prayer.saveCombinedLate') : t('prayer.saveCombined')}
             disabled={!canSave}
             loading={busy}
-            onPress={() => void run(() => markPrayer(prayer, day, at, { cause, combine: true }))}
+            onPress={() =>
+              void run(() =>
+                markPrayer(prayer, day, at, {
+                  cause,
+                  combine: true,
+                  quality,
+                  pairKhushoo: settings.askKhushoo ? pairKhushoo : undefined,
+                }),
+              )
+            }
           />
           {ownTimeStarted ? <Button title={t('prayer.back')} variant="ghost" onPress={() => setStep('mark')} /> : null}
         </>
@@ -290,8 +370,10 @@ export function PrayerSheet() {
               paddingBottom: insets.bottom + Spacing.four,
             },
           ]}>
-          {/* Keyed so the steps and the cause reset for each prayer. */}
-          {prayer ? <SheetBody key={`${prayer}:${day}`} prayer={prayer} day={day} /> : null}
+          <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+            {/* Keyed so the steps and the cause reset for each prayer. */}
+            {prayer ? <SheetBody key={`${prayer}:${day}`} prayer={prayer} day={day} /> : null}
+          </ScrollView>
         </View>
       </KeyboardAvoidingView>
     </Modal>
@@ -302,11 +384,12 @@ const styles = StyleSheet.create({
   flex: { flex: 1 },
   backdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.35)' },
   sheet: {
+    maxHeight: '92%',
     borderTopLeftRadius: Radius.large,
     borderTopRightRadius: Radius.large,
     borderWidth: 1,
     padding: Spacing.four,
-    gap: Spacing.three,
   },
+  content: { gap: Spacing.three },
   status: { borderRadius: Radius.medium, borderWidth: 1, padding: Spacing.three, gap: 2 },
 });

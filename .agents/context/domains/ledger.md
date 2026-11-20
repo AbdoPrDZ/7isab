@@ -25,7 +25,7 @@ Created automatically. They can't be deleted.
 
 **User accounts:** any other account, in any currency or in gold grams. Starter accounts CCP, EUR, Debts and Gold are created once (see `wallet.md`).
 
-**Sin presets:** missed prayer, delayed prayer, backbiting, lying, anger, not lowering the gaze, wasted time (penalty 1 each; names translated by preset key).
+**Sin presets:** missed prayer, delayed prayer, backbiting, lying, anger, not lowering the gaze, wasted time, weak khushoo, prayer at home, missed Jumu'ah, late bedtime, relapse (penalty 1 each; names translated by preset key).
 
 ## Entry types
 - **Task done**
@@ -36,6 +36,7 @@ Created automatically. They can't be deleted.
 - **ذنب (sin)**
   - Akhira **−** penalty
   - Thanb-Sada9a **+** penalty
+- **Late bedtime** (`bedtime_late`): same as a sin, penalty of the "Late bedtime" sin type; see `bedtime.md`
 - **Prayer missed / prayed late** (`prayer_missed`, `prayer_late`)
   - Same as a sin, with the penalty of the "Missed prayer" / "Late prayer" sin type; the cause is the entry note. See `prayer.md`
 - **Fast tapping while reading Quran**
@@ -65,7 +66,8 @@ Created automatically. They can't be deleted.
 - **Defaults:** every reward, penalty and rate defaults to **1** and the user configures it. Never hard-code other values.
 - **Fixed IDs for automatic entries:** see `../decisions.md` #5.
 - **End-of-day check:** turns each task's progress into entries the day after (today stays open). Missed past days are caught up on the next app open, from `settings.closedThrough`. Prayer tasks are excluded: they are counted at each prayer's safe time (`prayer.md`).
-- **Task kinds:** quran, athkar, custom, prayer (automatic), nafilah (rawatib, duha, witr, qiyam, tahajjud; counted in rak'ahs; time window from the prayer times), fasting (presets in `lib/ledger/presets.ts`).
+- **Plain tasks** (`task.plain`, "Counts in hisab" off): reward and penalty 0, `entryForDay` returns nothing, never in a rating (reports, programs and statistics list them apart).
+- **Task kinds:** quran, athkar, custom, prayer (automatic), bedtime (automatic, `bedtime.md`; skipped by the day-end check), nafilah (rawatib, duha, witr, qiyam, tahajjud; counted in rak'ahs; time window from the prayer times), fasting (presets in `lib/ledger/presets.ts`).
 - **Repeats:** daily; chosen weekdays; weekly / monthly / yearly (weeks start on Saturday; the target covers the whole period, which is counted the day after it ends); `hijri` (matching Hijri months and days, e.g. Ramadan = month 9, the White Days = days 13–15); `hijriMonth` (target over a whole Hijri month, e.g. six days of Shawwal). Period progress is stored on the period's first day.
 - **Units:** check, count, pages, words, hizb / rub / thumn (Quran fractions, `quran.md`), rak'ahs, days.
 - **Corrections:** entries are deleted whole (long-press in Hisab / Wallet), never edited.

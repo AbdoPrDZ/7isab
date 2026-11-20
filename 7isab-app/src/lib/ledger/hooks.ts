@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { useDocs } from '@/lib/data/vault';
 import { useFormat } from '@/lib/format';
 
-import { computeBalances } from './ledger';
+import { computeBalances, untouchedStarterKey } from './ledger';
 import {
   GOLD_CURRENCY,
   RecordTypes,
@@ -58,7 +58,11 @@ export function useLedgerLabels() {
   const settings = useSettings();
   const main = settings?.mainCurrency ?? 'DZD';
 
-  const accountName = (account: Account) => (account.fixed ? t(`accounts.${account.fixed}`) : account.name);
+  const accountName = (account: Account) => {
+    if (account.fixed) return t(`accounts.${account.fixed}`);
+    const starter = untouchedStarterKey(account);
+    return starter ? t(`accounts.starter.${starter}`, { defaultValue: account.name }) : account.name;
+  };
   const sinName = (sin: SinType) => (sin.preset ? t(`sins.presets.${sin.preset}`, { defaultValue: sin.name }) : sin.name);
   const currencyOf = (account: Account) =>
     account.unit.kind === 'money' ? (account.unit.currency ?? main) : account.unit.kind === 'gold' ? GOLD_CURRENCY : null;

@@ -11,18 +11,22 @@ import i18n from '@/i18n';
 import { addDays, daysBetween, fromDay, today } from '@/lib/dates';
 import { deterministicId, getDoc, putDoc, removeDoc } from '@/lib/data/vault';
 import { fixedAccountId, round } from '@/lib/ledger/ledger';
+import { reasonLabel } from '@/lib/ledger/reasons';
 import { entryForDay, progressId, taskEntryId } from '@/lib/ledger/tasks';
 import {
   RecordTypes,
   type Entry,
+  type Khushoo,
   type PrayerName,
+  type PrayerPlace,
+  type Reason,
   type SinType,
   type Task,
   type TaskProgress,
 } from '@/lib/ledger/types';
 
 import { refreshPrayerNudges } from './notifications';
-import { getPrayerSettings, prayerDeadline, PRAYERS, prayerTaskId, prayerTimes } from './prayer';
+import { getPrayerSettings, isJumuah, prayerDeadline, PRAYERS, prayerTaskId, prayerTimes } from './prayer';
 
 export { prayerTaskId };
 
@@ -60,6 +64,13 @@ export const COMBINE_PAIRS: Partial<Record<PrayerName, PrayerName>> = {
   maghrib: 'isha',
   isha: 'maghrib',
 };
+
+/** The prayer it can be combined with on `day`: none on Friday for Dhuhr / Asr (Jumu'ah is never combined). */
+export function combinePair(prayer: PrayerName, day: string): PrayerName | undefined {
+  const pair = COMBINE_PAIRS[prayer];
+  if (!pair) return undefined;
+  return isJumuah(prayer, day) || isJumuah(pair, day) ? undefined : pair;
+}
 
 /** How a prayer was marked on a day (null when not marked). */
 export function prayerMark(prayer: PrayerName, day: string): TaskProgress | null {
@@ -103,7 +114,7 @@ function started(prayer: PrayerName, day: string, now: Date): boolean {
 export function canMarkPrayer(prayer: PrayerName, day: string, now: Date = new Date()): boolean {
   const task = getPrayerTask(prayer);
   if (!task || task.archived || day < task.startDate) return false;
-  const pair = COMBINE_PAIRS[prayer];
+  const pair = combinePair(prayer, day);
   return started(prayer, day, now) || (!!pair && started(pair, day, now));
 }
 
@@ -168,11 +179,96 @@ async function settlePrayerDay(task: Task, prayer: PrayerName, day: string, now:
   if (!same) await putDoc<Entry>(RecordTypes.entry, entry);
 }
 
-async function writeMark(
-  prayer: PrayerName,
+/** How it was prayed, beyond the time: khushoo and place (with the reason when at home). */
+export type PrayerQuality = {
+  khushoo?: Khushoo;
+  place?: PrayerPlace;
+  /** A Reason id (scope homePrayer); required when place is home. */
+  placeReasonId?: string;
+};
+
+type MarkFields = Pick<
+  TaskProgress,
+  'value' | 'status' | 'cause' | 'combinedWith' | 'prayedAt' | 'khushoo' | 'place' | 'placeReasonId' | 'placeReason'
+>;
+
+function qualityFields(quality: PrayerQuality): Partial<MarkFields> {
+  const reason =
+    quality.place === 'home' && quality.placeReasonId
+      ? getDoc<Reason>(RecordTypes.reason, quality.placeReasonId)
+      : undefined;
+  if (quality.place === 'home' && !reason) throw new Error('A prayer at home needs a reason');
+  return {
+    khushoo: quality.khushoo,
+    place: quality.place,
+    placeReasonId: reason?.id,
+    placeReason: reason ? reasonLabel(reason) : undefined,
+  };
+}
+
+/** A Thanb entry from a sin type (null when its penalty is 0). Not linked to the task, so it reads as that sin. */
+function sinEntry(
+  id: string,
   day: string,
-  mark: Pick<TaskProgress, 'value' | 'status' | 'cause' | 'combinedWith' | 'prayedAt'>,
-) {
+  preset: 'weakKhushoo' | 'homePrayer' | 'missedJumuah',
+  note: string,
+): Omit<Entry, 'createdAt' | 'updatedAt'> | null {
+  const sinTypeId = deterministicId(`sin:${preset}`);
+  const penalty = round(getDoc<SinType>(RecordTypes.sinType, sinTypeId)?.penalty ?? 1);
+  if (penalty <= 0) return null;
+  return {
+    id,
+    kind: 'sin',
+    date: day,
+    sinTypeId,
+    note,
+    lines: [
+      { account: fixedAccountId('akhira'), amount: -penalty },
+      { account: fixedAccountId('thanb'), amount: penalty },
+    ],
+  };
+}
+
+async function writeEntry(id: string, entry: Omit<Entry, 'createdAt' | 'updatedAt'> | null): Promise<void> {
+  const existing = getDoc<Entry>(RecordTypes.entry, id);
+  if (!entry) {
+    if (existing) await removeDoc(RecordTypes.entry, id);
+    return;
+  }
+  const same =
+    existing &&
+    existing.sinTypeId === entry.sinTypeId &&
+    existing.note === entry.note &&
+    JSON.stringify(existing.lines) === JSON.stringify(entry.lines);
+  if (!same) await putDoc<Entry>(RecordTypes.entry, entry);
+}
+
+/**
+ * The Thanb entries of how a prayer was prayed, each with a fixed id so a
+ * correction rewrites it: weak khushoo; prayed at home (always for Jumu'ah;
+ * for the others when "always Thanb" is on or the reason counts as Thanb).
+ */
+async function settlePrayerQuality(task: Task, prayer: PrayerName, day: string): Promise<void> {
+  const mark = prayerMark(prayer, day);
+  const name = i18n.t(`prayer.names.${isJumuah(prayer, day) ? 'jumuah' : prayer}`);
+
+  const khushooId = deterministicId(`prayer-khushoo:${task.id}:${day}`);
+  await writeEntry(khushooId, mark?.khushoo === 'weak' ? sinEntry(khushooId, day, 'weakKhushoo', name) : null);
+
+  const placeId = deterministicId(`prayer-place:${task.id}:${day}`);
+  let place: Omit<Entry, 'createdAt' | 'updatedAt'> | null = null;
+  if (mark?.place === 'home') {
+    const note = mark.placeReason ? `${name} · ${mark.placeReason}` : name;
+    if (isJumuah(prayer, day)) place = sinEntry(placeId, day, 'missedJumuah', note);
+    else {
+      const reason = mark.placeReasonId ? getDoc<Reason>(RecordTypes.reason, mark.placeReasonId) : undefined;
+      if (getPrayerSettings().homeAlwaysThanb || (reason?.thanb ?? true)) place = sinEntry(placeId, day, 'homePrayer', note);
+    }
+  }
+  await writeEntry(placeId, place);
+}
+
+async function writeMark(prayer: PrayerName, day: string, mark: MarkFields) {
   const task = getPrayerTask(prayer);
   if (!task) return;
   await putDoc<TaskProgress>(RecordTypes.progress, {
@@ -182,6 +278,7 @@ async function writeMark(
     ...mark,
   });
   await settlePrayerDay(task, prayer, day, new Date());
+  await settlePrayerQuality(task, prayer, day);
   // Marked: no more "did you pray?" nudges; un-marked: they come back.
   await refreshPrayerNudges(prayer, day).catch(() => undefined);
 }
@@ -240,26 +337,65 @@ export async function markPrayer(
   prayer: PrayerName,
   day: string,
   at: Date,
-  options: { cause?: string; combine?: boolean } = {},
+  options: {
+    cause?: string;
+    combine?: boolean;
+    /** Khushoo and place of this prayer (the place is shared when combined). */
+    quality?: PrayerQuality;
+    /** Combined: the pair's own khushoo. */
+    pairKhushoo?: Khushoo;
+  } = {},
 ): Promise<void> {
   const text = options.cause?.trim() || undefined;
   const prayedAt = at.getTime();
+  const quality = qualityFields(options.quality ?? {});
   if (options.combine) {
-    const pair = COMBINE_PAIRS[prayer];
-    if (!pair) throw new Error('Fajr cannot be combined');
+    const pair = combinePair(prayer, day);
+    if (!pair) throw new Error('This prayer cannot be combined');
     const timing = combineTiming(prayer, day, at);
     if (!timing.ok) throw new Error(timing.reason);
     if (timing.status === 'late' && !text) throw new Error('A late prayer needs a cause');
     // Late combined: both are late (Thanb each), still linked as a pair.
     const status = timing.status === 'late' ? 'late' : 'combined';
-    await writeMark(prayer, day, { value: 1, status, cause: text, combinedWith: pair, prayedAt });
-    await writeMark(pair, day, { value: 1, status, cause: text, combinedWith: prayer, prayedAt });
+    await writeMark(prayer, day, { value: 1, status, cause: text, combinedWith: pair, prayedAt, ...quality });
+    await writeMark(pair, day, {
+      value: 1,
+      status,
+      cause: text,
+      combinedWith: prayer,
+      prayedAt,
+      ...quality,
+      khushoo: options.pairKhushoo,
+    });
     return;
   }
   const timing = prayerTiming(prayer, day, at);
   if (!timing.ok) throw new Error(timing.reason);
   if (timing.status === 'late' && !text) throw new Error('A late prayer needs a cause');
-  await writeMark(prayer, day, { value: 1, status: timing.status, cause: text, prayedAt });
+  await writeMark(prayer, day, { value: 1, status: timing.status, cause: text, prayedAt, ...quality });
+}
+
+/**
+ * Corrects the khushoo and place of a prayer already marked (its time and
+ * status stay). The place is shared by a combined pair, so it changes on both.
+ */
+export async function setPrayerQuality(prayer: PrayerName, day: string, quality: PrayerQuality): Promise<void> {
+  const mark = prayerMark(prayer, day);
+  if (!mark) throw new Error('The prayer is not marked');
+  const fields = qualityFields(quality);
+  const { id: _id, taskId: _t, date: _d, createdAt: _c, updatedAt: _u, ...rest } = mark;
+  await writeMark(prayer, day, { ...rest, ...fields });
+  const pair = mark.combinedWith;
+  const pairMark = pair ? prayerMark(pair, day) : null;
+  if (pair && pairMark?.combinedWith === prayer) {
+    const { id: _pi, taskId: _pt, date: _pd, createdAt: _pc, updatedAt: _pu, ...pairRest } = pairMark;
+    await writeMark(pair, day, {
+      ...pairRest,
+      place: fields.place,
+      placeReasonId: fields.placeReasonId,
+      placeReason: fields.placeReason,
+    });
+  }
 }
 
 /** Removes the mark (and its pair's, when they were combined). */

@@ -28,6 +28,7 @@ import {
   currentPrayer,
   nextPrayer,
   prayerDeadline,
+  prayerNameKey,
   prayerTimes,
   resolvedMadhab,
   resolvedMethod,
@@ -122,7 +123,7 @@ export default function PrayerScreen() {
                 {t('prayer.next')}
               </AppText>
               <AppText variant="title" color="primary" align="center">
-                {t(`prayer.names.${next.prayer}`)} · {clock(next.time)}
+                {t(`prayer.names.${prayerNameKey(next.prayer, toDay(next.time))}`)} · {clock(next.time)}
               </AppText>
               <AppText variant="label" align="center">
                 {countdown(next.time, now)}
@@ -166,7 +167,7 @@ export default function PrayerScreen() {
                   <Fragment key={name}>
                     {index > 0 ? <Divider /> : null}
                     <Row
-                      title={t(`prayer.names.${name}`)}
+                      title={t(`prayer.names.${prayerNameKey(name, day)}`)}
                       subtitle={subtitle}
                       value={clock(time)}
                       valueColor={

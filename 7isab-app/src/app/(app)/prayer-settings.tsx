@@ -4,6 +4,7 @@ import { StyleSheet, Switch, View } from 'react-native';
 
 import { FullScreenWarning } from '@/components/alarms/full-screen-warning';
 import { usePrayerFormat } from '@/components/prayer/prayer-format';
+import { PrayerQualitySettings } from '@/components/prayer/quality-settings';
 import { AppText } from '@/components/ui/app-text';
 import { Button } from '@/components/ui/button';
 import { MinusIcon, PlusIcon } from '@/components/ui/icons';
@@ -298,6 +299,8 @@ export default function PrayerSettingsScreen() {
           />
         </View>
       </Section>
+
+      {settings.tasks ? <PrayerQualitySettings /> : null}
     </Screen>
   );
 }

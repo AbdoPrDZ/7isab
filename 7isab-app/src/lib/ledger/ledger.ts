@@ -15,6 +15,7 @@ import {
   setVaultMeta,
 } from '@/lib/data/vault';
 
+import { ensureReasonPresets } from './reasons';
 import {
   RecordTypes,
   type Account,
@@ -41,6 +42,7 @@ export const STARTER_ACCOUNTS: { key: string; name: string; role: Account['role'
   { key: 'ccp', name: 'CCP', role: 'wallet', unit: { kind: 'money' } },
   { key: 'eur', name: 'EUR', role: 'wallet', unit: { kind: 'money', currency: 'EUR' } },
   { key: 'debts', name: 'Debts', role: 'lent', unit: { kind: 'money' } },
+  { key: 'owe', name: 'Debts I owe', role: 'borrowed', unit: { kind: 'money' } },
   { key: 'gold', name: 'Gold', role: 'savings', unit: { kind: 'gold' } },
 ];
 
@@ -49,7 +51,31 @@ export const DEFAULT_CURRENCY = 'DZD';
 export const DEFAULT_RATES: Rates = { sadaqa: 1, zakat: 1, thanbCost: 1, thanbReward: 1, fastTap: 1 };
 
 /** Preset sin types (names are translated by preset key; penalty defaults to 1). */
-export const SIN_PRESETS = ['missedPrayer', 'latePrayer', 'backbiting', 'lying', 'anger', 'lowerGaze', 'wastedTime'];
+export const SIN_PRESETS = [
+  'missedPrayer',
+  'latePrayer',
+  'backbiting',
+  'lying',
+  'anger',
+  'lowerGaze',
+  'wastedTime',
+  'weakKhushoo',
+  'homePrayer',
+  'missedJumuah',
+  'lateBedtime',
+  'relapse',
+];
+
+/**
+ * Starter accounts whose name was never changed are shown translated
+ * ("Debts" → "Owed to me", "Debts I owe" → "I owe"…). Returns the starter key, or null.
+ */
+export function untouchedStarterKey(account: Account): string | null {
+  for (const starter of STARTER_ACCOUNTS) {
+    if (account.id === deterministicId(`account:starter:${starter.key}`) && account.name === starter.name) return starter.key;
+  }
+  return null;
+}
 
 export function fixedAccountId(key: FixedAccountKey): string {
   return deterministicId(`account:fixed:${key}`);
@@ -100,6 +126,17 @@ export async function ensureDefaults(mainCurrency: string): Promise<void> {
     ].filter((rate) => !getDocs<ExchangeRate>(RecordTypes.exchangeRate).some((item) => item.currency === rate.currency));
     if (rates.length) await putDocs<ExchangeRate>(RecordTypes.exchangeRate, rates);
     await setVaultMeta('starter_accounts', '1');
+    await setVaultMeta('starter_owe', '1');
+  }
+
+  // Added later: money the user owes, separate from money owed to them. Created once for existing users too.
+  if (!(await getVaultMeta('starter_owe'))) {
+    const owe = STARTER_ACCOUNTS.find((item) => item.key === 'owe')!;
+    const id = deterministicId('account:starter:owe');
+    if (!getDoc(RecordTypes.account, id)) {
+      await putDoc<Account>(RecordTypes.account, { id, name: owe.name, role: owe.role, unit: owe.unit, order: 14 });
+    }
+    await setVaultMeta('starter_owe', '1');
   }
 
   if (!getDoc(RecordTypes.settings, settingsId())) {
@@ -130,6 +167,8 @@ export async function ensureDefaults(mainCurrency: string): Promise<void> {
       })),
     );
   }
+
+  await ensureReasonPresets();
 }
 
 export function getSettings(): Settings {

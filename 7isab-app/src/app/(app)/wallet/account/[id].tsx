@@ -111,7 +111,7 @@ export default function AccountScreen() {
         <Button
           title={t('stats.openStats')}
           variant="ghost"
-          onPress={() => router.push({ pathname: '/stats', params: { tab: 'dunya', account: existing.id } })}
+          onPress={() => router.push({ pathname: '/stats', params: { section: 'dunya', account: existing.id } })}
         />
       ) : null}
 

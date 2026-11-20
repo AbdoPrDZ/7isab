@@ -16,8 +16,9 @@ import { Platform } from 'react-native';
 
 import i18n from '@/i18n';
 import { addDays, fromDay, today, toDay, weekday } from '@/lib/dates';
-import { getDocs, getVaultMeta, newId, putDoc, removeDoc, setVaultMeta, useDocs, type Doc } from '@/lib/data/vault';
-import { RecordTypes, type PrayerName } from '@/lib/ledger/types';
+import { deterministicId, getDoc, getDocs, getVaultMeta, newId, onLocalChange, putDoc, removeDoc, setVaultMeta, useDocs, type Doc } from '@/lib/data/vault';
+import { getProgressValue, isDue, progressRatio } from '@/lib/ledger/tasks';
+import { RecordTypes, type PrayerName, type Task } from '@/lib/ledger/types';
 import { nativeAlarm, nativeSound, type NativeRing } from '@/lib/alarms/native-alarm';
 import { ensureChannel, usableSound } from '@/lib/prayer/notifications';
 import { getPrayerSettings, prayerTimes, type PrayerSettings } from '@/lib/prayer/prayer';
@@ -44,6 +45,8 @@ export type Alarm = Doc & {
   sound: string;
   /** Minutes between rings until stopped; 0 = ring once. */
   ringAgain: number;
+  /** Bound to a task: rings only on days the task is due and not done yet. */
+  taskId?: string;
 };
 
 export type AlarmInput = Omit<Alarm, 'id' | 'createdAt' | 'updatedAt' | 'onceDate'> & { id?: string };
@@ -64,13 +67,17 @@ export function occurrenceOn(time: AlarmTime, day: string, settings: PrayerSetti
   return new Date(times[time.prayer].getTime() + time.offset * 60_000);
 }
 
-function ringsOn(alarm: Pick<Alarm, 'days' | 'onceDate'>, day: string): boolean {
+function ringsOn(alarm: Pick<Alarm, 'days' | 'onceDate' | 'taskId'>, day: string): boolean {
+  if (alarm.taskId) {
+    const task = getDoc<Task>(RecordTypes.task, alarm.taskId);
+    return !!task && !task.archived && isDue(task, day) && progressRatio(task, getProgressValue(task, day)) < 1;
+  }
   return alarm.days.length ? alarm.days.includes(weekday(day)) : alarm.onceDate === day;
 }
 
 /** The next time the alarm rings after `from`, looking a week ahead. */
 export function nextRing(
-  alarm: Pick<Alarm, 'days' | 'onceDate' | 'time' | 'enabled'>,
+  alarm: Pick<Alarm, 'days' | 'onceDate' | 'time' | 'enabled' | 'taskId'>,
   settings: PrayerSettings = getPrayerSettings(),
   from: Date = new Date(),
 ): Date | null {
@@ -149,6 +156,10 @@ export async function rescheduleAlarms(force = false): Promise<void> {
     settings.madhab,
     settings.adjust,
     alarms.map((alarm) => [alarm.id, alarm.updatedAt]),
+    // Task alarms follow the task's progress: which of the next days still ring.
+    alarms
+      .filter((alarm) => alarm.taskId)
+      .map((alarm) => Array.from({ length: ALARM_DAYS }, (_, offset) => (ringsOn(alarm, addDays(today(), offset)) ? 1 : 0)).join('')),
   ]);
   if (!force && (await getVaultMeta(META_KEY)) === signature) return;
 
@@ -245,4 +256,60 @@ export async function stopAlarm(identifier: string): Promise<boolean> {
       .map((item) => Notifications.dismissNotificationAsync(item.request.identifier)),
   );
   return true;
+}
+
+// ---- Task alarms ---------------------------------------------------------------------
+
+/** Fixed id of a task's alarm (one per task). */
+export function taskAlarmId(taskId: string): string {
+  return deterministicId(`task-alarm:${taskId}`);
+}
+
+export function getTaskAlarm(taskId: string): Alarm | undefined {
+  return getDoc<Alarm>(RecordTypes.alarm, taskAlarmId(taskId));
+}
+
+/**
+ * Sets (or with `time` null, removes) a task's alarm. It repeats every day,
+ * and `ringsOn` keeps only the days the task is due and not yet done.
+ */
+export async function saveTaskAlarm(
+  task: Pick<Task, 'id' | 'title'>,
+  time: AlarmTime | null,
+  options: { sound?: string; ringAgain?: number } = {},
+): Promise<void> {
+  const existing = getTaskAlarm(task.id);
+  if (!time) {
+    if (existing) await deleteAlarm(existing);
+    return;
+  }
+  await saveAlarm({
+    id: taskAlarmId(task.id),
+    label: task.title,
+    enabled: true,
+    time,
+    days: [0, 1, 2, 3, 4, 5, 6],
+    sound: options.sound ?? existing?.sound ?? 'default',
+    ringAgain: options.ringAgain ?? existing?.ringAgain ?? 5,
+    taskId: task.id,
+  });
+}
+
+let alarmTimer: ReturnType<typeof setTimeout> | null = null;
+
+/**
+ * Keeps task alarms in step with progress while the vault is open: a few
+ * seconds after any change, alarms are rescheduled (a no-op unless something
+ * they depend on changed, e.g. a task was just done).
+ */
+export function watchAlarms(): () => void {
+  const schedule = () => {
+    if (alarmTimer) clearTimeout(alarmTimer);
+    alarmTimer = setTimeout(() => void rescheduleAlarms().catch(() => undefined), 3000);
+  };
+  const stop = onLocalChange(schedule);
+  return () => {
+    stop();
+    if (alarmTimer) clearTimeout(alarmTimer);
+  };
 }

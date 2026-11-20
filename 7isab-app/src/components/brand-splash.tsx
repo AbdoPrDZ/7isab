@@ -61,7 +61,7 @@ export function BrandSplash({ ready, onFinished }: BrandSplashProps) {
       <IslamicPattern color={isDark ? Colors.dark.primary : '#FFFFFF'} opacity={0.08} size={64} />
       <Animated.View style={{ transform: [{ scale }, { scale: exitScale }] }}>
         <Image
-          source={isDark ? require('@/assets/images/splash-icon-dark.png') : require('@/assets/images/splash-icon.png')}
+          source={require('@/assets/images/splash-icon.png')}
           style={styles.emblem}
           resizeMode="contain"
           accessibilityIgnoresInvertColors

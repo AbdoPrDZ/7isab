@@ -42,7 +42,7 @@ export default function TasksScreen() {
               <Row
                 title={task.title}
                 subtitle={describe(task)}
-                value={`+${format.points(task.reward)} / −${format.points(task.penalty)}`}
+                value={task.plain ? t('task.plain') : `+${format.points(task.reward)} / −${format.points(task.penalty)}`}
                 chevron
                 onPress={() => router.push({ pathname: '/task/[id]', params: { id: task.id } })}
               />

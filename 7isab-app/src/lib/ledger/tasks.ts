@@ -121,6 +121,7 @@ export function taskEntryId(taskId: string, day: string): string {
  * for a task (null when nothing changes). The id uses the period's first day.
  */
 export function entryForDay(task: Task, day: string): Omit<Entry, 'createdAt' | 'updatedAt'> | null {
+  if (task.plain) return null;
   const key = taskRange(task, day).start;
   const ratio = progressRatio(task, getProgressValue(task, day));
   const reward = round(task.reward * ratio);
@@ -166,6 +167,8 @@ export async function closeFinishedDays(): Promise<number> {
       if (!isDue(task, day)) continue;
       // Prayer tasks are counted at each prayer's deadline instead (lib/prayer/tasks).
       if (task.kind === 'prayer') continue;
+      // The bedtime task is counted per night (lib/bedtime).
+      if (task.kind === 'bedtime') continue;
       // Period tasks are counted only on the last day of their period.
       const range = taskRange(task, day);
       if (range.end !== day) continue;

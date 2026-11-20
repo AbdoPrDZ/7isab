@@ -11,7 +11,7 @@ Plan: [../plans/STARTUP.md](../plans/STARTUP.md). Tick a step only once it's don
 - [x] Write the product plan (`.agents/plans/STARTUP.md`)
 - [x] Set up the project context (`.agents/context/`)
 - [x] Install `expo-updates`, `expo-device`, `expo-ota-client`
-- [x] Configure the OTA plugin (server URL, package `com.abdopr.hisab`, runtime `1.0.0`) and wrap the root in `<OTAProvider>`
+- [x] Configure the OTA plugin (server URL, package `com.abdopr.apps.hisab`, runtime `1.0.0`) and wrap the root in `<OTAProvider>`
 - [ ] *(you)* Create the app and version `1.0.0` on the OTA server
 - [ ] *(you)* Put the OTA server URL and version API key in `7isab-app/.env.local` (`OTA_SERVER_URL`, `OTA_API_KEY`), never in committed files
 - [ ] `npx expo-ota-client doctor` passes
@@ -97,6 +97,58 @@ Plan: [../plans/STARTUP.md](../plans/STARTUP.md). Tick a step only once it's don
 - [ ] Alarms: at a time or relative to a prayer (e.g. 30 min before Fajr), once or on weekdays, sound, ring again every 5 / 10 min up to 3 times until stopped; Android alarm-clock delivery at alarm volume; encrypted in the vault — written, needs device test
 - [ ] Native HisabAlarm module (modules/hisab-alarm, Android): athan and alarms as real alarm clocks (setAlarmClock), full-screen page over the lock screen with Stop / Snooze, sound in a media foreground service (athan once, alarms loop), rescheduled after restart; falls back to notifications in Expo Go — written, not compiled yet, needs device test
 - [ ] Reschedule in the background when the app isn't opened for 10+ days (not done)
+
+## Self-discipline (added, plan §4.8–4.10)
+### Bedtime
+- [ ] Settings → Bedtime: on/off, bedtime (default 23:00), grace (default 30 min); on-time reward = the task's, late penalty = the "Late bedtime" sin type (default 1) — written, needs device test
+- [ ] Automatic "Go to bed" task; "Going to sleep?" notification at bedtime — written, needs device test
+- [ ] Mark the time slept (Today card, calendar): on time / late (reason required) / "I don't remember" (= late); last night asked on the Today card while unmarked; unmarked by the end of the next day = "Late bedtime" Thanb — written, needs device test
+- [ ] Editable reason presets with "counts as Thanb" (shared reasons editor); "Late bedtime" hisab entry (bedtime_late) with the reason as note; corrections rewrite the entry — written, needs device test
+- [ ] Bedtime on the Today card, the calendar and in reports — written, needs device test
+### Reports
+- [ ] Report builder for day / week / month / year from progress and marks (live for today) + entries (tasks, prayers with khushoo / place / Jumu'ah, bedtime, Quran, athkar, sins, points, sadaqa / zakat); programs come with the Programs steps — written, needs device test
+- [ ] Rating estimate (completion % lowered by sins / Thanb; thresholds 80 % / 50 % configurable) with "estimate only" wording — written, needs device test
+- [ ] Private note per report (encrypted, synced) — written, needs device test
+- [ ] Report screen (summary, rating, change vs previous period, tasks done / due, note); opened from Today, the calendar (any day / week / month / year) and notifications — written, needs device test
+- [ ] Report notifications at a configurable time (default 22:00): daily, and weekly (Friday) / monthly / yearly on the period's last day; each can be switched off (Settings → Reports) — written, needs device test
+### Programs
+- [ ] Program records: name, category (Improving, Healing, custom name), start (today / tomorrow), length (none / 7 / 30 / 40 / 60 / 90 / N days), goal; tasks linked to a program from the task editor or the program screen — written, needs device test
+- [ ] Healing: clean-day streaks (current, best) and relapse log (today / yesterday, optional note, optional "Relapse" Thanb, default 1; deleting a relapse deletes its Thanb) — written, needs device test
+- [ ] Program report (whole program, week, month: rating = task completion ÷ (due tasks + relapses), tasks, relapses); programs in the period reports — written, needs device test
+- [ ] Programs list (Today, Settings) and program screen: create, edit, finish / reopen, delete (tasks stay) — written, needs device test
+- [ ] AR / EN / FR strings for bedtime, reports and programs — written, needs device test
+- [ ] Typecheck and lint pass (done); tested on a device
+### Prayer quality (khushoo, Jumu'ah)
+- [ ] Khushoo level (good / normal / weak) on the prayer mark, editable later; Settings on/off — written, needs device test
+- [ ] Weak khushoo → "Weak khushoo" Thanb entry (sin type, penalty default 1); corrections rewrite it — written, needs device test
+- [ ] Place on every prayer mark (mosque / home), editable later; Settings on/off; one question for combined prayers — written, needs device test
+- [ ] Home → reason required from an editable list ("counts as Thanb"; penalty from the "Prayer at home" sin type, default 1); Thanb reason → "Prayer at home" entry with the reason as note — written, needs device test
+- [ ] Setting "Praying at home always gives a Thanb" (default on): on = every home prayer → "Prayer at home" Thanb, reason kept as note; off = the reason decides — written, needs device test
+- [ ] Friday Dhuhr shown as Jumu'ah; at home → prayed + always a "Missed Jumu'ah" Thanb (default 1), reason kept as note only; no combining with Asr — written, needs device test
+- [ ] Khushoo, place and Jumu'ah in the calendar and in reports — written, needs device test
+- [ ] AR / EN / FR strings for all of the above — written, needs device test
+- [ ] Typecheck and lint pass (done); tested on a device
+
+### Debts both ways (plan §4.12)
+- [ ] Default "Debts I owe" account (borrowed) for new and existing users; "Debts" shown as "Owed to me"; borrowing defaults to it — written, needs device test
+- [ ] Loans: lend / got repaid / borrow / pay back (separate kinds) — written, needs device test
+- [ ] Wallet Debts card: Owed to me / I owe totals (not netted), by person — written, needs device test
+### Statistics tab (plan §4.13)
+- [ ] Remove the Hisab tab; quick actions and negative warnings on Today; Statistics tab — written, needs device test
+- [ ] Filter engine: periods (incl. custom range picker), comparison, multi-select filters, search, group by, saved filters — written, needs device test
+- [ ] Overview and Entries (filtered list, totals, delete, CSV export with warning) — written, needs device test
+- [ ] Dunya section on the filters — written, needs device test
+- [ ] Akhira section (points, Thanb with carry-over, sadaqa, zakat, sins) — written, needs device test
+- [ ] Deeds section (tasks, heat map, prayers, bedtime, Quran, athkar, programs) — written, needs device test
+- [ ] AR / EN / FR strings — written, needs device test
+- [ ] Typecheck and lint pass (done); tested on a device
+
+### Settings, plain tasks, task alarms (plan §4.14)
+- [ ] Settings: configuration only (prayer, bedtime, reports, rates, sin types, categories, exchange rates…); tasks, alarms, programs removed from it — written, needs device test
+- [ ] Plain tasks ("Counts in hisab" off): no entries, not in ratings; separate list in Statistics and reports — written, needs device test
+- [ ] Task alarm: clock / prayer-relative, due days only, skipped when done, removed with the task — written, needs device test
+- [ ] AR / EN / FR strings — written, needs device test
+- [ ] Typecheck and lint pass (done); tested on a device
 
 ## Phase 4: Wallet
 - [ ] Accounts screen (create, archive, hide; any currency or gold) — written, needs device test

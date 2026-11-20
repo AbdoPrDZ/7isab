@@ -18,12 +18,16 @@ import { useSession } from '@/lib/session/session-provider';
 import { startSync } from '@/lib/sync/sync-engine';
 import { runDueRecurring } from '@/lib/wallet/recurring';
 import { ensureCategories } from '@/lib/wallet/wallet';
-import { rescheduleAlarms, setupAlarmCategory, stopAlarm } from '@/lib/alarms/alarms';
+import { rescheduleAlarms, setupAlarmCategory, stopAlarm, watchAlarms } from '@/lib/alarms/alarms';
 import { watchTaskReminder } from '@/lib/notifications/task-reminder';
 import { refreshLocationQuietly } from '@/lib/prayer/location';
 import { getPrayerSettings } from '@/lib/prayer/prayer';
 import { reschedulePrayers, setupPrayerNotifications } from '@/lib/prayer/notifications';
 import { settlePrayers, syncPrayerTasks } from '@/lib/prayer/tasks';
+import { settleBedtime, syncBedtimeTask } from '@/lib/bedtime/bedtime';
+import { watchBedtime } from '@/lib/bedtime/notifications';
+import { watchReports } from '@/lib/reports/notifications';
+import { BedtimeSheet } from '@/components/bedtime/bedtime-sheet';
 
 setupPrayerNotifications();
 
@@ -56,6 +60,8 @@ function prepareDay(): Promise<void> {
       await ensureCategories();
       await closeFinishedDays();
       await runDueRecurring();
+      await syncBedtimeTask();
+      await settleBedtime();
       await preparePrayers();
     } finally {
       preparing = null;
@@ -116,10 +122,31 @@ export default function AppLayout() {
     return watchTaskReminder();
   }, [status]);
 
+  // Bedtime notifications follow the marks and the bedtime setting.
+  useEffect(() => {
+    if (status !== 'open') return;
+    return watchBedtime();
+  }, [status]);
+
+  // Task alarms follow the tasks' progress (no ring once a task is done).
+  useEffect(() => {
+    if (status !== 'open') return;
+    return watchAlarms();
+  }, [status]);
+
+  // Day / week / month / year report notifications.
+  useEffect(() => {
+    if (status !== 'open') return;
+    return watchReports();
+  }, [status]);
+
   // While the app is open, a prayer whose deadline passes unmarked is counted as missed within a minute.
   useEffect(() => {
     if (status !== 'open') return;
-    const timer = setInterval(() => void settlePrayers().catch(() => undefined), 60_000);
+    const timer = setInterval(() => {
+      void settlePrayers().catch(() => undefined);
+      void settleBedtime().catch(() => undefined);
+    }, 60_000);
     return () => clearInterval(timer);
   }, [status]);
 
@@ -160,6 +187,7 @@ export default function AppLayout() {
         <Stack.Screen name="(tabs)" />
       </Stack>
       <PrayerSheet />
+      <BedtimeSheet />
       {locked ? <LockScreen /> : null}
     </View>
   );

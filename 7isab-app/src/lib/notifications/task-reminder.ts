@@ -22,7 +22,7 @@ const REMINDER_DAYS = 7;
 /** Tasks still to do on `day` (due that day, or a period task not yet complete). */
 function openTasks(day: string): Task[] {
   return getDocs<Task>(RecordTypes.task).filter((task) => {
-    if (task.kind === 'prayer' || !isDue(task, day)) return false;
+    if (task.kind === 'prayer' || task.kind === 'bedtime' || !isDue(task, day)) return false;
     return progressRatio(task, getProgressValue(task, day)) < 1;
   });
 }

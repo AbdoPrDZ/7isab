@@ -129,6 +129,12 @@ export type PrayerSettings = Doc & {
   endingSoon: number;
   /** Android: athan as a full-screen page over the lock screen (needs the HisabAlarm module). */
   athanScreen: boolean;
+  /** Ask the khushoo level when marking a prayer (weak adds a Thanb). */
+  askKhushoo: boolean;
+  /** Ask where it was prayed (mosque / home; home needs a reason). */
+  askPlace: boolean;
+  /** Every prayer at home adds a Thanb, whatever the reason (off: the reason decides). Not Jumu'ah: always a Thanb. */
+  homeAlwaysThanb: boolean;
 };
 
 const ZERO: Record<PrayerName, number> = { fajr: 0, dhuhr: 0, asr: 0, maghrib: 0, isha: 0 };
@@ -150,7 +156,20 @@ export const DEFAULT_PRAYER_SETTINGS: Omit<PrayerSettings, 'id' | 'createdAt' | 
   checkIn: 30,
   endingSoon: 15,
   athanScreen: true,
+  askKhushoo: true,
+  askPlace: true,
+  homeAlwaysThanb: true,
 };
+
+/** Friday's Dhuhr is Jumu'ah. */
+export function isJumuah(prayer: PrayerName | 'sunrise', day: string): boolean {
+  return prayer === 'dhuhr' && fromDay(day).getDay() === 5;
+}
+
+/** The translation key under prayer.names: "jumuah" for Friday's Dhuhr. */
+export function prayerNameKey<P extends PrayerName | 'sunrise'>(prayer: P, day: string): P | 'jumuah' {
+  return isJumuah(prayer, day) ? 'jumuah' : prayer;
+}
 
 /** Fixed id of a prayer's task (HMAC of the prayer), shared by the tasks and the notifications. */
 export function prayerTaskId(prayer: PrayerName): string {

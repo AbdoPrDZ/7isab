@@ -31,6 +31,7 @@ yarn-error.*
 *.pem
 
 # local env files
+.env
 .env*.local
 
 # typescript
@@ -42,3 +43,9 @@ example
 /ios
 /android
 /modules/hisab-alarm/android/build/
+
+# release artifacts (npm run build:release / build:apk)
+/release
+
+# deploy env (secrets); .env.deploy.example is committed
+/.env.deploy

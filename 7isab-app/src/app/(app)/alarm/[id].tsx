@@ -60,7 +60,17 @@ export default function AlarmEditorScreen() {
 
   const save = async () => {
     setSaving(true);
-    await saveAlarm({ id: existing?.id, label: label.trim(), enabled: true, time, days, sound, ringAgain });
+    // A task's alarm keeps its task (it rings on the task's due days, so its weekdays stay all).
+    await saveAlarm({
+      id: existing?.id,
+      label: label.trim(),
+      enabled: true,
+      time,
+      days: existing?.taskId ? [0, 1, 2, 3, 4, 5, 6] : days,
+      sound,
+      ringAgain,
+      taskId: existing?.taskId,
+    });
     router.back();
   };
 
@@ -141,25 +151,31 @@ export default function AlarmEditorScreen() {
         onChangeText={setLabel}
       />
 
-      <Section title={t('alarm.repeat')}>
-        <Chips
-          options={weekOrder().map((value) => ({ value, label: t(`task.days.${value}`) }))}
-          value={days}
-          onChange={toggleDay}
-        />
-        <View style={styles.quickRow}>
-          <Button
-            title={t('alarm.everyDay')}
-            variant="ghost"
-            style={styles.flex}
-            onPress={() => setDays([0, 1, 2, 3, 4, 5, 6])}
-          />
-          <Button title={t('alarm.once')} variant="ghost" style={styles.flex} onPress={() => setDays([])} />
-        </View>
+      {existing?.taskId ? (
         <AppText variant="caption" color="textSecondary">
-          {days.length ? (days.length === 7 ? t('alarm.everyDay') : t('alarm.onDays')) : t('alarm.onceHint')}
+          {t('alarm.taskBound')}
         </AppText>
-      </Section>
+      ) : (
+        <Section title={t('alarm.repeat')}>
+          <Chips
+            options={weekOrder().map((value) => ({ value, label: t(`task.days.${value}`) }))}
+            value={days}
+            onChange={toggleDay}
+          />
+          <View style={styles.quickRow}>
+            <Button
+              title={t('alarm.everyDay')}
+              variant="ghost"
+              style={styles.flex}
+              onPress={() => setDays([0, 1, 2, 3, 4, 5, 6])}
+            />
+            <Button title={t('alarm.once')} variant="ghost" style={styles.flex} onPress={() => setDays([])} />
+          </View>
+          <AppText variant="caption" color="textSecondary">
+            {days.length ? (days.length === 7 ? t('alarm.everyDay') : t('alarm.onDays')) : t('alarm.onceHint')}
+          </AppText>
+        </Section>
+      )}
 
       <Section title={t('alarm.sound')}>
         <Chips

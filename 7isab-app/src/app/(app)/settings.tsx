@@ -147,6 +147,16 @@ export default function SettingsScreen() {
         <TaskReminderCard />
       </Section>
 
+      <Section title={t('settingsExtra.days')}>
+        <Card>
+          <Row title={t('prayer.settings')} chevron onPress={() => router.push('/prayer-settings')} />
+          <Divider />
+          <Row title={t('bedtime.settings')} chevron onPress={() => router.push('/bedtime')} />
+          <Divider />
+          <Row title={t('report.settings')} chevron onPress={() => router.push('/report-settings')} />
+        </Card>
+      </Section>
+
       <Section title={t('settingsExtra.hisab')}>
         <Card>
           <CurrencyField />
@@ -156,11 +166,9 @@ export default function SettingsScreen() {
           <Divider />
           <Row title={t('settingsExtra.rates')} chevron onPress={() => router.push('/rates')} />
           <Divider />
-          <Row title={t('settingsExtra.tasks')} chevron onPress={() => router.push('/tasks')} />
+          <Row title={t('settingsExtra.sinTypes')} chevron onPress={() => router.push({ pathname: '/sins', params: { mode: 'edit' } })} />
           <Divider />
-          <Row title={t('alarm.listTitle')} chevron onPress={() => router.push('/alarms')} />
-          <Divider />
-          <Row title={t('settingsExtra.sins')} chevron onPress={() => router.push('/sins')} />
+          <Row title={t('wallet.categories')} chevron onPress={() => router.push('/wallet/categories')} />
         </Card>
       </Section>
 

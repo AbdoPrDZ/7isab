@@ -41,8 +41,11 @@ Current level: **standard**.
 - `security.md`: end-to-end encryption, keys, app lock.
 - `sync.md`: push / pull, conflicts, stable ids.
 - `quran.md`: Quran data and rendering, tap reading, athkar.
-- `wallet.md`: wallet features on top of the ledger, saving plans, statistics.
-- `prayer.md`: prayer times, athan, prayer marks, alarms and the native alarm module, reminders, Hijri dates and the calendar.
+- `wallet.md`: wallet features on top of the ledger, saving plans, debts both ways.
+- `prayer.md`: prayer times, athan, prayer marks (khushoo, place, Jumu'ah), alarms (incl. task alarms) and the native alarm module, reminders, Hijri dates and the calendar.
+- `bedtime.md`: the bedtime task, late reasons, notifications.
+- `reports.md`: day / week / month / year reports, rating, notes; programs and relapses.
+- `statistics.md`: the Statistics tab (filters, sections, export).
 
 ## Relationship to the Plan
 

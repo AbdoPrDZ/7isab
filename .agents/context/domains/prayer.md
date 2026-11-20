@@ -30,6 +30,11 @@
   - Late: `prayer_late`, penalty from the "Late prayer" sin type (`sin:latePrayer`).
   - Unmarked past the safe time: `prayer_missed`, penalty from `sin:missedPrayer`.
   - The day-end check skips prayer tasks. `settlePrayers()` runs on app open and every minute while the app is open, catching up 14 days.
+- **Quality** (`setPrayerQuality`, settings `askKhushoo`, `askPlace`, `homeAlwaysThanb`), stored on the mark and editable later:
+  - **Khushoo** good / normal / weak. Weak: a `sin` entry "Weak khushoo" (`sin:weakKhushoo`), fixed id `prayer-khushoo:<task>:<day>`. Combined prayers ask it per prayer.
+  - **Place** mosque / home. Home needs a reason (`reason` records, scope `homePrayer`). A `sin` entry "Prayer at home" (`sin:homePrayer`, fixed id `prayer-place:<task>:<day>`) when `homeAlwaysThanb` is on (default) or the reason counts as Thanb. Shared by a combined pair.
+  - **Jumu'ah:** Friday Dhuhr is shown as Jumu'ah (`isJumuah`, `prayerNameKey`) and can't be combined (`combinePair`). At home always "Missed Jumu'ah" (`sin:missedJumuah`), the reason only a note.
+  - These entries have no `taskId`, so Hisab and stats show them as sins.
 - **Colours:** prayed = green, late = dark orange (`prayerLate`), combined = light orange (`prayerCombined`), missed = red.
 
 ## User alarms (`lib/alarms/alarms.ts`)
@@ -37,6 +42,7 @@
   - **When:** a clock time, or relative to a prayer or sunrise (± minutes).
   - **Repeat:** on weekdays, or once (`onceDate`; it turns itself off after ringing).
   - Also a label, a sound and `ringAgain` minutes.
+- **Task alarms** (`taskId`, fixed id `task-alarm:<task>`, set from the task editor with `saveTaskAlarm`): ring only on days the task is due and not yet done (`ringsOn`). `watchAlarms` reschedules a few seconds after any change (a no-op unless a task alarm's days changed). Removed when the task is archived or deleted; their weekdays can't be edited.
 - **Scheduling:** the next 7 days. They follow prayer-time changes, since `applyPrayerSettings` reschedules them.
 - **With the native module:** one looping ring per occurrence, with Snooze = `ringAgain`.
 - **Without it:** a sticky alarm-clock notification that rings again every `ringAgain` min, up to 3 more times. Tapping it or pressing Stop opens the app and cancels the remaining rings (`stopAlarm`).

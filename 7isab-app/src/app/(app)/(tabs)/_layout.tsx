@@ -5,7 +5,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AppText } from '@/components/ui/app-text';
-import { BeadsIcon, BookIcon, HomeIcon, ScaleIcon, WalletIcon, type IconProps } from '@/components/ui/icons';
+import { BeadsIcon, BookIcon, ChartIcon, HomeIcon, WalletIcon, type IconProps } from '@/components/ui/icons';
 import { Spacing } from '@/constants/theme';
 import { useDirection } from '@/hooks/use-direction';
 import { useTheme } from '@/hooks/use-theme';
@@ -15,7 +15,7 @@ const TABS: { name: string; label: string; Icon: (props: IconProps) => ReactNode
   { name: 'quran', label: 'tabs.quran', Icon: BookIcon },
   { name: 'athkar', label: 'tabs.athkar', Icon: BeadsIcon },
   { name: 'wallet', label: 'tabs.wallet', Icon: WalletIcon },
-  { name: 'hisab', label: 'tabs.hisab', Icon: ScaleIcon },
+  { name: 'stats', label: 'tabs.stats', Icon: ChartIcon },
 ];
 
 /** Themed tab bar with SVG icons; follows the language direction. */

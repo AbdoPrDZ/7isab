@@ -33,11 +33,11 @@ OTA updates ◄── self-hosted OTA server (Expo Updates protocol; URL and key
 |---|---|
 | `app/_layout.tsx` | Root: fonts, theme, `SessionProvider`, branded splash, `Stack.Protected` guards (signed out → sign-in/sign-up; just signed up → recovery-key; signed in → `(app)`) |
 | `app/(app)/_layout.tsx` | Opens the vault, runs the daily work (defaults, end-of-day check, repeating items, prayers: tasks, settlement, location, athan / nudges / alarms schedule), starts sync, shows the lock screen, mounts the prayer sheet, the task reminder and the 1-minute prayer check |
-| `app/(app)/(tabs)/` | Tabs: Today (`index`), Quran, Athkar, Wallet, Hisab, with a custom themed tab bar |
-| `app/(app)/…` | Stack screens: settings, account, security, rates, sins, tasks, `task/[id]`, `hisab/action`, `quran/[page]`, `athkar/[list]`, `wallet/*`, stats, calendar, prayer, prayer-settings, qibla, alarms, `alarm/[id]` |
+| `app/(app)/(tabs)/` | Tabs: Today (`index`, with the Hisab quick actions), Quran, Athkar, Wallet, Statistics (`stats`), with a custom themed tab bar |
+| `app/(app)/…` | Stack screens: settings, account, security, rates, sins, tasks, `task/[id]`, `hisab/action`, `quran/[page]`, `athkar/[list]`, `wallet/*`, report, report-settings, bedtime, programs, `program/[id]`, calendar, prayer, prayer-settings, qibla, alarms, `alarm/[id]` |
 | `lib/data/` | `database.ts` (SQLite, migrations), `cipher.ts` (record encryption, stable ids), `vault.ts` (in-memory store + hooks + sync helpers) |
 | `lib/ledger/` | Types, rules and actions (`ledger.ts`), tasks and end-of-day check (`tasks.ts`), hooks |
-| `lib/wallet/`, `lib/athkar/`, `lib/quran/`, `lib/stats/` | Feature logic (see domain files) |
+| `lib/wallet/`, `lib/athkar/`, `lib/quran/`, `lib/stats/`, `lib/bedtime/`, `lib/reports/`, `lib/programs/` | Feature logic (see domain files) |
 | `lib/prayer/`, `lib/alarms/`, `lib/notifications/`, `lib/calendar/` | Prayer times, athan and marks; user alarms and the native bridge; task reminder; Hijri dates and calendar helpers (see `domains/prayer.md`) |
 | `lib/sync/sync-engine.ts` | Push / pull client and triggers |
 | `lib/lock/app-lock.ts` | PIN / fingerprint lock |
@@ -46,7 +46,7 @@ OTA updates ◄── self-hosted OTA server (Expo Updates protocol; URL and key
 | `lib/format.ts`, `lib/dates.ts` | Intl formatting with the digits preference; local `YYYY-MM-DD` days |
 | `components/ui/` | Themed building blocks (`layout.tsx`: Screen, Card, Row, Chips, AmountInput…; SVG `icons.tsx`) |
 | `components/quran/mushaf-page.tsx` | Mushaf page renderer |
-| `components/prayer/`, `components/calendar/`, `components/stats/`, `components/alarms/` | Prayer card and mark sheet, calendar views, chart pieces, alarm labels and full-screen warning |
+| `components/prayer/`, `components/calendar/`, `components/stats/`, `components/alarms/`, `components/bedtime/`, `components/hisab/`, `components/task/`, `components/wallet/` | Prayer card and mark sheet, calendar views, statistics panel and charts, alarm labels, bedtime card and sheet, Hisab quick actions, task alarm field, debts card |
 | `i18n/` | i18next; `locales/{en,ar,fr}.ts` + `features.{en,ar,fr}.ts` |
 
 ## Server layout (`7isab-server/`)

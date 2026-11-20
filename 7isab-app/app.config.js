@@ -10,7 +10,7 @@
 const fs = require('node:fs');
 const path = require('node:path');
 
-const { withGradleProperties } = require('expo/config-plugins');
+const { withAppBuildGradle, withGradleProperties } = require('expo/config-plugins');
 
 const ATHAN_DIR = path.join(__dirname, 'assets', 'athan');
 const SOUND_FILE = /\.(mp3|wav|ogg)$/i;
@@ -26,19 +26,40 @@ const GRADLE_PROPERTIES = {
   'org.gradle.workers.max': '4',
 };
 
+/**
+ * CMake 3.22.1 (the default) ships ninja 1.10, which fails on Windows object
+ * paths over 260 characters (react-native-gesture-handler hits this). 3.31.6
+ * ships ninja 1.12, which handles long paths. It must be installed in the SDK.
+ */
+const CMAKE_VERSION = '3.31.6';
+const CMAKE_MARKER = '// @7isab cmake-version';
+
 function withBuildSettings(config) {
-  return withGradleProperties(config, (mod) => {
+  config = withGradleProperties(config, (mod) => {
     for (const [key, value] of Object.entries(GRADLE_PROPERTIES)) {
       mod.modResults = mod.modResults.filter((item) => !(item.type === 'property' && item.key === key));
       mod.modResults.push({ type: 'property', key, value });
     }
     return mod;
   });
+  return withAppBuildGradle(config, (mod) => {
+    if (mod.modResults.contents.includes(CMAKE_MARKER)) return mod;
+    const anchor = /^android \{\n/m;
+    if (!anchor.test(mod.modResults.contents)) {
+      throw new Error('withBuildSettings: no `android {` block in app/build.gradle to set the CMake version.');
+    }
+    mod.modResults.contents = mod.modResults.contents.replace(
+      anchor,
+      (match) =>
+        `${match}    ${CMAKE_MARKER}\n    externalNativeBuild {\n        cmake {\n            version "${CMAKE_VERSION}"\n        }\n    }\n\n`,
+    );
+    return mod;
+  });
 }
 
 /**
  * Over-the-air updates: the server and its key come from environment
- * variables (.env.local, never committed). Without them the plugin is left
+ * variables (.env, never committed). Without them the plugin is left
  * out and the app builds without OTA.
  */
 function otaPlugin() {

@@ -1,3 +1,4 @@
+import { router } from 'expo-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, View } from 'react-native';
@@ -77,6 +78,11 @@ export default function CalendarScreen() {
           <BackIcon size={22} color={theme.primary} flip={!isRtl} />
         </Pressable>
       </View>
+      <Pressable accessibilityRole="button" onPress={() => router.push(`/report?period=${view}&date=${day}`)}>
+        <AppText variant="label" weight="semibold" color="primary" align="center">
+          {t(`report.open.${view}`)}
+        </AppText>
+      </Pressable>
 
       {view === 'day' ? <DayView day={day} tasks={tasks} prayer={prayer} /> : null}
       {view === 'week' ? <WeekView day={day} tasks={tasks} prayer={prayer} onOpenDay={openDay} /> : null}

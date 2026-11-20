@@ -12,8 +12,9 @@ import { addIncomeOrExpense, transfer } from '@/lib/ledger/ledger';
 import type { Account } from '@/lib/ledger/types';
 import { conversionCurrency, useCategories } from '@/lib/wallet/wallet';
 
-type Kind = 'income' | 'expense' | 'transfer' | 'lend' | 'borrow' | 'repay';
-const KINDS: Kind[] = ['income', 'expense', 'transfer', 'lend', 'borrow', 'repay'];
+/** repay: someone pays me back (owed to me → wallet); payBack: I repay a debt (wallet → I owe). */
+type Kind = 'income' | 'expense' | 'transfer' | 'lend' | 'borrow' | 'repay' | 'payBack';
+const KINDS: Kind[] = ['income', 'expense', 'transfer', 'lend', 'borrow', 'repay', 'payBack'];
 
 /** Rate to convert 1 unit of `from` into `to`, from the manual rates (both relative to the main currency). */
 function suggestedRate(from: string, to: string, main: string, rates: { currency: string; rate: number }[]): number {
@@ -51,6 +52,7 @@ export default function TransactionScreen() {
     lend: [cash, lent[0]],
     borrow: [borrowed[0], cash],
     repay: [lent[0] ?? cash, cash],
+    payBack: [cash, borrowed[0]],
   };
   const [from, setFrom] = useState(defaults[kind][0]?.id ?? '');
   const [to, setTo] = useState(defaults[kind][1]?.id ?? '');
@@ -77,9 +79,10 @@ export default function TransactionScreen() {
     lend: t('wallet.lend'),
     borrow: t('wallet.borrow'),
     repay: t('wallet.repay'),
+    payBack: t('wallet.payBack'),
   };
-  const fromOptions = { income: wallets, expense: wallets, transfer: money, lend: wallets, borrow: borrowed.length ? borrowed : money, repay: [...lent, ...borrowed, ...wallets] }[kind];
-  const toOptions = { income: [], expense: [], transfer: money, lend: lent.length ? lent : money, borrow: wallets, repay: [...wallets, ...borrowed, ...lent] }[kind];
+  const fromOptions = { income: wallets, expense: wallets, transfer: money, lend: wallets, borrow: borrowed.length ? borrowed : money, repay: lent.length ? lent : money, payBack: wallets }[kind];
+  const toOptions = { income: [], expense: [], transfer: money, lend: lent.length ? lent : money, borrow: wallets, repay: wallets, payBack: borrowed.length ? borrowed : money }[kind];
   const kindCategories = categories.filter((category) => category.kind === (kind === 'income' ? 'income' : 'expense'));
 
   const save = async () => {
@@ -153,7 +156,7 @@ export default function TransactionScreen() {
         />
       ) : null}
 
-      {kind === 'lend' || kind === 'borrow' || kind === 'repay' ? (
+      {kind === 'lend' || kind === 'borrow' || kind === 'repay' || kind === 'payBack' ? (
         <TextField label={t('wallet.person')} value={person} onChangeText={setPerson} />
       ) : null}
 

@@ -2,19 +2,19 @@
   "expo": {
     "name": "7isab-app",
     "slug": "7isab-app",
-    "version": "1.0.0",
-    "runtimeVersion": "1.0.0",
+    "version": "0.0.1",
+    "runtimeVersion": "1.1.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "7isabapp",
     "userInterfaceStyle": "automatic",
     "ios": {
-      "bundleIdentifier": "com.abdopr.hisab"
+      "bundleIdentifier": "com.abdopr.apps.hisab"
     },
     "android": {
-      "package": "com.abdopr.hisab",
+      "package": "com.abdopr.apps.hisab",
       "adaptiveIcon": {
-        "backgroundColor": "#08736F",
+        "backgroundColor": "#0A503C",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
@@ -35,7 +35,7 @@
           "resizeMode": "contain",
           "dark": {
             "backgroundColor": "#0B1512",
-            "image": "./assets/images/splash-icon-dark.png"
+            "image": "./assets/images/splash-icon.png"
           }
         }
       ],

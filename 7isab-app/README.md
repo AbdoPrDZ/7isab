@@ -12,10 +12,10 @@ The mobile app of [7isab](../README.md): Expo SDK 58, React Native, expo-router 
 
 ```bash
 npm install
-cp .env.example .env.local
+cp .env.example .env
 ```
 
-`.env.local` (never committed):
+`.env` (never committed):
 
 | Variable | What |
 |---|---|
@@ -31,13 +31,48 @@ npx expo start            # dev server only, once the development build is insta
 
 Expo Go works for most screens, but the athan sounds, the full-screen athan and alarm page, and fingerprint protection of the data key need a development or release build.
 
-Release APK (signed with the debug key; fine for your own phone):
+## Release
+
+Builds go to `release/` (ignored by git), named `<slug>-<runtimeVersion>-<version>`, ready to upload to OTACenter:
 
 ```bash
-npx expo prebuild --platform android
-cd android && ./gradlew assembleRelease
-# → android/app/build/outputs/apk/release/app-release.apk
+# Production (for upload): .env.deploy ONLY (.env is not read).
+# cp .env.deploy.example .env.deploy, then fill it in (it holds secrets; git ignores it).
+# Fails if .env.deploy is missing, a required value is empty, or a URL isn't https.
+npm run build:deploy:release   # OTA bundle → release/7isab-app-1.0.0-1.0.0.zip   (Version → Add bundle)
+npm run build:deploy:apk       # release APK → release/7isab-app-1.0.0-1.0.0.apk  (new native version)
+npm run build:deploy:all       # both
+
+# Local test builds: .env only (e.g. your computer's server). Don't upload these.
+npm run build:release
+npm run build:apk
+npm run build:all
 ```
+
+Both write to the same file names, so a local build overwrites the deploy build of the same version. The `ota` / `publish:*` scripts below always use the deploy environment. `npx expo start` uses `.env`.
+
+Bump `version` in `app.json` for each OTA bundle. Change `runtimeVersion` (and create the matching version in OTACenter) whenever native code changes. For deploy builds the OTA server and key come from `.env.deploy` (`OTA_SERVER_URL`, `OTA_API_KEY`); local builds use `.env`.
+
+The APK is signed with the debug key, so it's fine for your own phone.
+
+### Publish an OTA update from the CLI
+
+Sign in to OTACenter once; the token is saved in `.env.deploy` as `OTA_TOKEN` (never commit it):
+
+```bash
+npm run ota:login                            # asks login + password, saves OTA_TOKEN in .env.deploy
+npm run ota:doctor                           # checks the app ↔ OTACenter wiring
+```
+
+Then, after bumping `version` in `app.json`:
+
+```bash
+npm run publish:ota -- -m "What changed"     # build, upload, publish to everyone
+npm run publish:demo -- -m "What changed"    # …or to demo testers only
+npm run promote -- 1.0.1                     # demo → everyone
+```
+
+Extra options go after `--`: `--force-update` (required update), `--file release/<zip>` (upload an existing zip). New APKs are uploaded in the OTACenter dashboard; the CLI only handles bundles.
 
 ## Checks
 

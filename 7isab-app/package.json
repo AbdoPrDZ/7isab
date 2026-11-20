@@ -1,6 +1,6 @@
 {
   "name": "7isab-app",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "main": "expo-router/entry",
   "dependencies": {
     "@expo-google-fonts/amiri-quran": "^0.4.1",
@@ -27,6 +27,7 @@
     "expo-ota-client": "^0.1.0",
     "expo-router": "~58.0.31",
     "expo-secure-store": "~58.0.3",
+    "expo-sharing": "~58.0.23",
     "expo-splash-screen": "~58.0.14",
     "expo-sqlite": "~58.0.17",
     "expo-status-bar": "~58.0.5",
@@ -63,7 +64,19 @@
     "android": "expo run:android",
     "ios": "expo run:ios",
     "web": "expo start --web",
-    "lint": "expo lint"
+    "lint": "expo lint",
+    "build:release": "expo-ota-client release --platform android --out release",
+    "build:apk": "node ./scripts/build-apk.js",
+    "build:all": "npm run build:release && npm run build:apk",
+    "build:deploy:release": "npm run ota -- release --platform android --out release",
+    "build:deploy:apk": "node ./scripts/deploy-env.js node ./scripts/build-apk.js",
+    "build:deploy:all": "npm run build:deploy:release && npm run build:deploy:apk",
+    "ota": "node ./scripts/deploy-env.js node ./node_modules/expo-ota-client/dist/cli/index.js",
+    "ota:login": "node ./scripts/deploy-env.js node ./scripts/ota-login.js",
+    "ota:doctor": "npm run ota -- doctor",
+    "publish:ota": "npm run ota -- publish --platform android --activate",
+    "publish:demo": "npm run ota -- publish --platform android --demo",
+    "promote": "npm run ota -- promote"
   },
   "private": true
 }

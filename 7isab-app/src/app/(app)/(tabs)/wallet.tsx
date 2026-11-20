@@ -13,6 +13,7 @@ import { useDirection } from '@/hooks/use-direction';
 import { useTheme } from '@/hooks/use-theme';
 import { addMonths, monthOf, today } from '@/lib/dates';
 import { useDocs } from '@/lib/data/vault';
+import { DebtsCard } from '@/components/wallet/debts-card';
 import { useAccounts, useBalances, useEntries, useExchangeRates, useLedgerLabels } from '@/lib/ledger/hooks';
 import { deleteEntry } from '@/lib/ledger/ledger';
 import { RecordTypes, type Entry } from '@/lib/ledger/types';
@@ -66,10 +67,9 @@ export default function WalletScreen() {
   };
 
   const links: [string, Href][] = [
-    [t('wallet.categories'), '/wallet/categories'],
     [t('wallet.goals'), '/wallet/goals'],
     [t('wallet.recurring'), '/wallet/recurring'],
-    [t('stats.title'), { pathname: '/stats', params: { tab: 'dunya' } }],
+    [t('stats.title'), { pathname: '/stats', params: { section: 'dunya' } }],
     [t('wallet.zakat'), '/wallet/zakat'],
   ];
 
@@ -144,13 +144,7 @@ export default function WalletScreen() {
         ) : null}
       </Section>
 
-      <Section title={t('wallet.loans')}>
-        <View style={styles.quick}>
-          <Button title={t('wallet.lend')} variant="secondary" style={styles.flex} onPress={() => transaction('lend')} />
-          <Button title={t('wallet.borrow')} variant="secondary" style={styles.flex} onPress={() => transaction('borrow')} />
-          <Button title={t('wallet.repay')} variant="secondary" style={styles.flex} onPress={() => transaction('repay')} />
-        </View>
-      </Section>
+      <DebtsCard />
 
       <Card>
         {links.map(([label, href], index) => (
