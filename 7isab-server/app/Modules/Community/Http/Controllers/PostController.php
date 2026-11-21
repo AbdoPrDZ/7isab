@@ -3,8 +3,11 @@
 namespace App\Modules\Community\Http\Controllers;
 
 use App\Core\Http\Controller;
+use App\Modules\Community\Models\Import;
 use App\Modules\Community\Models\Post;
+use App\Modules\Community\Models\ProgramTemplate;
 use App\Modules\Community\Models\Space;
+use App\Modules\Community\Models\TestamentTemplate;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -73,6 +76,31 @@ class PostController extends Controller
             'audience' => 'sometimes|in:own_gender,everyone',
         ]);
 
+        $payload = $validated['payload'] ?? null;
+
+        if ($validated['type'] === 'testament') {
+            $this->validateTestamentPayload($payload);
+            $template = TestamentTemplate::create([
+                'author_id' => $profile->id,
+                'category' => $payload['category'],
+                'text' => $payload['text'],
+                'source' => $payload['source'] ?? null,
+            ]);
+            $payload['template_id'] = $template->id;
+        } elseif ($validated['type'] === 'program') {
+            $this->validateProgramPayload($payload);
+            $template = ProgramTemplate::create([
+                'author_id' => $profile->id,
+                'name' => $payload['name'],
+                'category' => $payload['category'],
+                'custom_category' => $payload['custom_category'] ?? null,
+                'goal' => $payload['goal'],
+                'length' => $payload['length'],
+                'tasks' => $payload['tasks'],
+            ]);
+            $payload['template_id'] = $template->id;
+        }
+
         $status = $space->posting_requires_approval ? 'pending' : 'published';
 
         $post = Post::create([
@@ -80,7 +108,7 @@ class PostController extends Controller
             'author_id' => $profile->id,
             'type' => $validated['type'],
             'body' => $validated['body'],
-            'payload' => $validated['payload'] ?? null,
+            'payload' => $payload,
             'audience' => $validated['audience'] ?? 'everyone',
             'status' => $status,
         ]);
@@ -89,6 +117,48 @@ class PostController extends Controller
             'id' => $post->id,
             'status' => $post->status,
         ]], 201);
+    }
+
+    private function validateTestamentPayload(?array $payload): void
+    {
+        if (! $payload) {
+            throw new \InvalidArgumentException('Testament payload is required');
+        }
+
+        if (empty($payload['category']) || empty($payload['text'])) {
+            throw new \InvalidArgumentException('Testament must have category and text');
+        }
+
+        $validCategories = ['jannah', 'nar', 'akhira', 'dunya', 'athkar'];
+        if (! in_array($payload['category'], $validCategories, true)) {
+            throw new \InvalidArgumentException('Invalid testament category');
+        }
+    }
+
+    private function validateProgramPayload(?array $payload): void
+    {
+        if (! $payload) {
+            throw new \InvalidArgumentException('Program payload is required');
+        }
+
+        if (empty($payload['name']) || empty($payload['category']) || empty($payload['goal']) || empty($payload['length']) || empty($payload['tasks'])) {
+            throw new \InvalidArgumentException('Program must have name, category, goal, length, and tasks');
+        }
+
+        if (! is_array($payload['tasks']) || count($payload['tasks']) === 0) {
+            throw new \InvalidArgumentException('Program must have at least one task');
+        }
+
+        $validCategories = ['improving', 'healing', 'custom'];
+        if (! in_array($payload['category'], $validCategories, true)) {
+            throw new \InvalidArgumentException('Invalid program category');
+        }
+
+        foreach ($payload['tasks'] as $task) {
+            if (empty($task['name']) || empty($task['type'])) {
+                throw new \InvalidArgumentException('Each task must have name and type');
+            }
+        }
     }
 
     public function update(Request $request, int $id): JsonResponse
@@ -147,7 +217,7 @@ class PostController extends Controller
         $user = $request->user();
         $profile = $user->communityProfile;
 
-        Post::create([
+        $importedPost = Post::create([
             'space_id' => $post->space_id,
             'author_id' => $profile->id,
             'type' => $post->type,
@@ -157,6 +227,16 @@ class PostController extends Controller
             'status' => 'published',
         ]);
 
-        return response()->json(['message' => 'Post imported'], 201);
+        Import::create([
+            'profile_id' => $profile->id,
+            'post_id' => $id,
+            'imported_at' => now(),
+        ]);
+
+        return response()->json([
+            'message' => 'Post imported',
+            'imported_post_id' => $importedPost->id,
+            'payload' => $importedPost->payload,
+        ], 201);
     }
 }

@@ -13,6 +13,10 @@ class Post extends Model
 
     protected $fillable = ['space_id', 'author_id', 'type', 'body', 'payload', 'audience', 'status', 'edited_at'];
 
+    protected $casts = [
+        'payload' => 'json',
+    ];
+
     public function space(): BelongsTo
     {
         return $this->belongsTo(Space::class);
