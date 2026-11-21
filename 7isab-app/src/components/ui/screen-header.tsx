@@ -20,12 +20,27 @@ type ScreenHeaderProps = {
   start?: ReactNode;
   /** Extra content on the end side of the title row. */
   end?: ReactNode;
+  /** Puts the start and end content on their own row, with the title and subtitle on the row below. */
+  stacked?: boolean;
 };
 
 /** Emerald patterned header with a back button that points the right way in RTL. */
-export function ScreenHeader({ title, subtitle, backLabel, start, end }: ScreenHeaderProps) {
+export function ScreenHeader({ title, subtitle, backLabel, start, end, stacked = false }: ScreenHeaderProps) {
   const theme = useTheme();
   const { isRtl } = useDirection();
+
+  const titles = (
+    <View style={styles.titles}>
+      <AppText variant="heading" color="onHero">
+        {title}
+      </AppText>
+      {subtitle ? (
+        <AppText variant="caption" color="onHeroMuted">
+          {subtitle}
+        </AppText>
+      ) : null}
+    </View>
+  );
 
   return (
     <View style={[styles.header, { backgroundColor: theme.hero }]}>
@@ -43,18 +58,10 @@ export function ScreenHeader({ title, subtitle, backLabel, start, end }: ScreenH
             </Pressable>
           ) : null}
           {start}
-          <View style={styles.titles}>
-            <AppText variant="heading" color="onHero">
-              {title}
-            </AppText>
-            {subtitle ? (
-              <AppText variant="caption" color="onHeroMuted">
-                {subtitle}
-              </AppText>
-            ) : null}
-          </View>
+          {stacked ? <View style={styles.spacer} /> : titles}
           {end}
         </View>
+        {stacked ? <View style={styles.stackedTitles}>{titles}</View> : null}
       </SafeAreaView>
     </View>
   );
@@ -87,5 +94,11 @@ const styles = StyleSheet.create({
   },
   titles: {
     flex: 1,
+  },
+  spacer: {
+    flex: 1,
+  },
+  stackedTitles: {
+    marginTop: Spacing.three,
   },
 });

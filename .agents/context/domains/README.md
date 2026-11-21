@@ -14,3 +14,4 @@
 | [testaments.md](testaments.md) | Testaments (توصيات): Jannah / Nar reminders, Akhira / Dunya advice and athkar as scheduled notifications; verified built-in ayat |
 | [search.md](search.md) | Global and per-screen search, Arabic and Uthmani-aware matching, offline Quran search |
 | [investments.md](investments.md) | Halal-only investments (trade, mudaraba, musharaka, ijara): capital accounts, records as ledger entries, expected vs real statistics |
+| [community.md](community.md) | The optional community: joining and rules, groups and pages, posts and comments by gender, shared items and events, trusted shaykhs and fatwa, moderation |

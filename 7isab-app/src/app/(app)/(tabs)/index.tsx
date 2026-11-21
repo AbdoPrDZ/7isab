@@ -142,6 +142,7 @@ export default function TodayScreen() {
   return (
     <Screen
       inTabs
+      stackedHeader
       title={title}
       headerStart={<ProfileAvatar size={40} tone="onHero" onPress={() => router.push('/settings')} />}
       subtitle={[format.day(day, 'long'), hijri ? format.digits(hijri) : null].filter(Boolean).join(' · ')}

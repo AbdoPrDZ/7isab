@@ -28,6 +28,7 @@ This is AI-readable memory for the 7isab project, kept up to date so agents don'
 - **Quran reader, tap reading, athkar:** domains/quran
 - **Wallet, statistics, saving plans:** domains/wallet → domains/ledger
 - **Prayer, athan, alarms, reminders, calendar, Hijri:** domains/prayer → domains/ledger
+- **Community (groups, pages, posts, fatwa, admin moderation):** domains/community → api → database
 - **Builds, releases, OTA:** workflows → integrations
 - **Features not built yet:** `.agents/plans/STARTUP.md` (the full plan)
-- **What's done and what's next:** `.agents/plans.progress/STARTUP.progress.md` (checkbox list)
+- **What's done and what's next:** `.agents/plans.progress/STARTUP.progress.md` and `COMMUNITY.progress.md` (checkbox lists)

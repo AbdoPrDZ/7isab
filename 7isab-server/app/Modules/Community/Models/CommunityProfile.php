@@ -6,6 +6,7 @@ use App\Core\Models\Concerns\Tabling;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 /**
  * A user's community identity: public names, and gender (decides every
@@ -32,5 +33,11 @@ class CommunityProfile extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    /** The shaykh record (trusted, or withdrawn), if any. */
+    public function shaykh(): HasOne
+    {
+        return $this->hasOne(Shaykh::class, 'profile_id');
     }
 }

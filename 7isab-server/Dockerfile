@@ -14,7 +14,7 @@ RUN npm run build
 # ---- 2. PHP app
 FROM php:8.4-fpm-alpine AS app
 
-RUN apk add --no-cache nginx postgresql-libs ca-certificates \
+RUN apk add --no-cache nginx postgresql-libs ca-certificates su-exec \
  && apk add --no-cache --virtual .build-deps $PHPIZE_DEPS postgresql-dev \
  && docker-php-ext-install pdo_pgsql opcache \
  && apk del .build-deps

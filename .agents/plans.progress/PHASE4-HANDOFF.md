@@ -8,7 +8,6 @@
 - `POST spaces/{id}/posts`: testament and program payloads validated with field rules (422), template rows created in one transaction.
 - `POST posts/{id}/import`: testament and program posts only; one `imports` row per profile and post (`firstOrCreate`); returns `payload` and `imports_count`. It no longer copies the post.
 - `GET community/rules` and `POST community/join` are outside `is_community_member` (non-members must reach them).
-- `CommunityTestSeeder`: local environment only. Sign up in the app as `test@example.com` first (keys are made on the device), then `php artisan db:seed --class=CommunityTestSeeder`.
 
 ## App
 - `lib/community/api.ts`: every function takes the session token first.
@@ -18,7 +17,7 @@
 - `lib/community/reverb.ts`: `useReverbChannel(name | null, handlers)` and `Channels`; not used by any screen yet.
 
 ## Device test
-1. Seed as above, sign in as the test user, Home, Community.
+1. Have an admin approve a group or page request, post a Testament and a program in it, then open Home, Community.
 2. Import the Testament: it appears in Testaments, switched on or off as chosen.
 3. Import the program with Today or Tomorrow: the program and its tasks appear, ending after its length.
 4. Pull the feed again: the post shows the import count.

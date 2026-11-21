@@ -40,7 +40,7 @@ Run the typecheck and lint before calling a task done.
 5. **Code signing (optional, not set up):** `npx expo-ota-client cert`.
 
 ## Server (`7isab-server/`)
-- **Docker:** `Dockerfile` (Node stage builds the admin panel; PHP 8.4-FPM + nginx in one container; `docker/entrypoint.sh` migrates, seeds and caches on every start) and `docker-compose.yml` (app + PostgreSQL 17, volumes `pgdata` and `storage`, config from `.env`). Quran import: `docker compose exec app php artisan quran:import`. PHP 8.4.1+ is required (Symfony 8). `*.sh` files are forced to LF in `.gitattributes`.
+- **Docker:** `Dockerfile` (Node stage builds the admin panel; PHP 8.4-FPM + nginx in one container; `docker/entrypoint.sh` migrates and seeds unless `RUN_MIGRATIONS=false`, caches, then runs the web server, or a service's own `command` as `www-data` via `su-exec`). Compose services: `app`, `queue`, `scheduler`, and `reverb` behind `--profile realtime` (not set up yet). Config from `.env.docker` (see `.env.docker.example`, which also lists the Reverb and Vite keys); the database is the shared `it-pg-db` container on the external `it-db-net` network; storage volume `7isab_7isab-storage`. Quran import: `docker compose exec app php artisan quran:import`. PHP 8.4.1+ is required (Symfony 8). `*.sh` files are forced to LF in `.gitattributes`.
 | Task | Command |
 |---|---|
 | Tests (Postgres `hisab_test`) | `php artisan test --compact` |

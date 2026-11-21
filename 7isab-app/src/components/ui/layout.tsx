@@ -37,9 +37,21 @@ type ScreenProps = {
   footer?: ReactNode;
   /** Tab screens sit above the tab bar, so they don't need the bottom inset. */
   inTabs?: boolean;
+  /** Header buttons on their own row, title and subtitle below (Home). */
+  stackedHeader?: boolean;
 };
 
-export function Screen({ title, subtitle, back = false, headerStart, headerEnd, children, footer, inTabs = false }: ScreenProps) {
+export function Screen({
+  title,
+  subtitle,
+  back = false,
+  headerStart,
+  headerEnd,
+  children,
+  footer,
+  inTabs = false,
+  stackedHeader = false,
+}: ScreenProps) {
   const { t } = useTranslation();
   const theme = useTheme();
   const { direction } = useDirection();
@@ -48,7 +60,7 @@ export function Screen({ title, subtitle, back = false, headerStart, headerEnd, 
 
   return (
     <View style={[styles.root, { backgroundColor: theme.background, direction }]}>
-      <ScreenHeader title={title} subtitle={subtitle} backLabel={back ? t('settings.back') : undefined} start={headerStart} end={headerEnd} />
+      <ScreenHeader title={title} subtitle={subtitle} backLabel={back ? t('settings.back') : undefined} start={headerStart} end={headerEnd} stacked={stackedHeader} />
       {/* The keyboard pushes the content and the footer (e.g. Save) up instead of covering them;
           Android draws edge-to-edge, so it needs the padding too. */}
       <KeyboardAvoidingView style={styles.root} behavior="padding">

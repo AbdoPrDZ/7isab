@@ -8,6 +8,10 @@ import Layout from './Layout';
 import Admins from './pages/Admins';
 import CommunityMembers from './pages/CommunityMembers';
 import CommunityRules from './pages/CommunityRules';
+import SpaceRequests from './pages/SpaceRequests';
+import Reports from './pages/Reports';
+import Shaykhs from './pages/Shaykhs';
+import Spaces from './pages/Spaces';
 import Dashboard from './pages/Dashboard';
 import Login from './pages/Login';
 import UserDetail from './pages/UserDetail';
@@ -39,6 +43,10 @@ const router = createBrowserRouter([
                     { path: 'users/:id', element: <UserDetail /> },
                     { path: 'community/members', element: <CommunityMembers /> },
                     { path: 'community/rules', element: <CommunityRules /> },
+                    { path: 'community/space-requests', element: <SpaceRequests /> },
+                    { path: 'community/spaces', element: <Spaces /> },
+                    { path: 'community/reports', element: <Reports /> },
+                    { path: 'community/shaykhs', element: <Shaykhs /> },
                     {
                         path: 'admins',
                         element: (

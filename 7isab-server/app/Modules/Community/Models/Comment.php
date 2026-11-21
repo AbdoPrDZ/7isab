@@ -10,7 +10,11 @@ class Comment extends Model
 {
     protected $table = 'comments';
 
-    protected $fillable = ['post_id', 'author_id', 'author_gender', 'parent_id', 'body', 'status'];
+    protected $fillable = ['post_id', 'author_id', 'author_gender', 'parent_id', 'body', 'status', 'edited_at'];
+
+    protected $casts = [
+        'edited_at' => 'datetime',
+    ];
 
     public function post(): BelongsTo
     {

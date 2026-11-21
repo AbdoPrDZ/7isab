@@ -12,7 +12,6 @@ class DatabaseSeeder extends Seeder
             RoleSeeder::class,
             SuperAdminSeeder::class,
             CommunityRuleSeeder::class,
-            CommunityTestSeeder::class,
         ]);
     }
 }

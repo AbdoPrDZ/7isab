@@ -8,8 +8,8 @@
 |---|---|---|
 | `7isab-app/` | Expo mobile app (SDK 58, expo-router, TypeScript, React Compiler, typed routes) | Phases 1–4, the sync client, and the added features written (prayer and athan, alarms, calendar, nafilah and fasting tasks, hizb / rub' / thumn, saving plans, statistics); typecheck and lint pass; many screens not yet tested on a device |
 | `7isab-app/modules/hisab-alarm` | Local Expo native module (Android, Kotlin): alarm-clock scheduling and a full-screen athan / alarm page | Written, not compiled yet (see `domains/prayer.md`) |
-| `7isab-server/` | Laravel 13 API + PostgreSQL + admin panel (React SPA + Tailwind v4, served by Laravel) | Auth, vault, Quran (with hizb divisions), sync, admin API and panel built; 64 PHPUnit tests pass |
-| `.agents/plans/` | Product plan (`STARTUP.md`) | Complete design |
+| `7isab-server/` | Laravel 13 API + PostgreSQL + admin panel (React SPA + Tailwind v4, served by Laravel) | Auth, vault, Quran (with hizb divisions), sync, admin API and panel, community phases 1–5 built; PHPUnit tests pass |
+| `.agents/plans/` | Product plan (`STARTUP.md`), community plan (`COMMUNITY.md`) | Complete design |
 
 Progress per step: `.agents/plans.progress/STARTUP.progress.md`.
 
@@ -53,7 +53,7 @@ OTA updates ◄── self-hosted OTA server (Expo Updates protocol; URL and key
 ## Server layout (`7isab-server/`)
 
 - `app/Core`: base Controller (JSON envelope `{success, message, …}`), Model, `Tabling` (list/search/sort/paginate).
-- `app/Modules/<Module>/routes.php` + `Http/Controllers`, `Actions`: **Auth, Vault, Admin, Quran, Sync**. All under `/api/v1` (`routes/api.php`).
+- `app/Modules/<Module>/routes.php` + `Http/Controllers`, `Actions`: **Auth, Vault, Admin, Quran, Sync, Community** (see `domains/community.md`). All under `/api/v1` (`routes/api.php`).
 - `resources/js/admin/`: admin SPA (react-router); `routes/web.php` serves `admin.blade.php` for every `/admin/*` path.
 - Details: [api.md](api.md), [database.md](database.md).
 

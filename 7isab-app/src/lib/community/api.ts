@@ -1,6 +1,33 @@
 import { apiRequest } from '@/lib/api/client';
 
-import type { CommunityPost, CommunityRule, Gender, ImportResult, Membership, PostPage, RuleAcceptance } from './types';
+import type {
+  CommunityComment,
+  FatwaThreadDetail,
+  FatwaThreadSummary,
+  MyQuestion,
+  PublishedFatwa,
+  QuestionForShaykh,
+  ShaykhProfile,
+  TrustFields,
+  TrustRequest,
+  CommunityPost,
+  CommunityRule,
+  Gender,
+  ImportResult,
+  Membership,
+  NewPost,
+  PostPage,
+  ReportReason,
+  ReportTarget,
+  RuleAcceptance,
+  SpaceDetail,
+  SpaceMemberItem,
+  SpaceMemberStatus,
+  SpaceRequestInput,
+  SpaceRequestItem,
+  SpaceSummary,
+  SpaceType,
+} from './types';
 
 // Rules and membership
 export async function getCommunityRules(token: string | null) {
@@ -36,45 +63,51 @@ export async function updateCommunityProfile(token: string | null, data: { first
 }
 
 // Spaces
-export async function discoverSpaces(token: string | null, params?: { gender?: 'male' | 'female' }) {
-  const query = params ? `?${new URLSearchParams(params as Record<string, string>).toString()}` : '';
-  return apiRequest(`/community/spaces${query}`, { token });
+export async function listSpaces(token: string | null, params: { type?: SpaceType; scope?: 'mine' | 'discover'; search?: string }) {
+  const query = new URLSearchParams(Object.entries(params).filter(([, value]) => value) as [string, string][]).toString();
+  return apiRequest<{ spaces: SpaceSummary[]; has_more: boolean }>(`/community/spaces${query ? `?${query}` : ''}`, { token });
 }
 
 export async function getSpace(token: string | null, slug: string) {
-  return apiRequest(`/community/spaces/${slug}`, { token });
+  return apiRequest<{ space: SpaceDetail }>(`/community/spaces/${encodeURIComponent(slug)}`, { token });
 }
 
-export async function joinSpace(token: string | null, id: number) {
-  return apiRequest(`/community/spaces/${id}/join`, { token, method: 'POST', body: {} });
+type SpaceAction = 'join' | 'leave' | 'follow' | 'unfollow';
+
+export async function spaceAction(token: string | null, id: number, action: SpaceAction) {
+  return apiRequest<{ space: SpaceSummary }>(`/community/spaces/${id}/${action}`, { token, method: 'POST', body: {} });
 }
 
-export async function leaveSpace(token: string | null, id: number) {
-  return apiRequest(`/community/spaces/${id}/leave`, { token, method: 'POST', body: {} });
+export async function updateSpaceSettings(
+  token: string | null,
+  id: number,
+  settings: { join_policy: 'open' | 'approval' } | Pick<SpaceDetail, 'posting_public' | 'posting_gender' | 'posting_requires_approval'>,
+) {
+  return apiRequest<{ space: SpaceDetail }>(`/community/spaces/${id}/settings`, { token, method: 'PUT', body: settings });
 }
 
-export async function followSpace(token: string | null, id: number) {
-  return apiRequest(`/community/spaces/${id}/follow`, { token, method: 'POST', body: {} });
+export async function getSpaceMembers(token: string | null, id: number, status: SpaceMemberStatus) {
+  return apiRequest<{ members: SpaceMemberItem[] }>(`/community/spaces/${id}/members?status=${status}`, { token });
 }
 
-export async function unfollowSpace(token: string | null, id: number) {
-  return apiRequest(`/community/spaces/${id}/unfollow`, { token, method: 'POST', body: {} });
+export async function moderateMember(token: string | null, id: number, memberId: number, action: 'approve' | 'reject' | 'ban' | 'unban') {
+  return apiRequest(`/community/spaces/${id}/members/${memberId}/${action}`, { token, method: 'POST', body: {} });
 }
 
-export async function createSpaceRequest(token: string | null, data: {
-  type: 'group' | 'page';
-  name: string;
-  purpose: string;
-  goals: string;
-  content_plan: string;
-  join_policy?: 'open' | 'approval';
-  audience?: 'everyone' | 'gender';
-}) {
-  return apiRequest('/community/space-requests', { token, method: 'POST', body: data });
+export async function setMemberRole(token: string | null, id: number, memberId: number, role: 'moderator' | 'member') {
+  return apiRequest(`/community/spaces/${id}/members/${memberId}/role`, { token, method: 'PUT', body: { role } });
+}
+
+export async function createSpaceRequest(token: string | null, data: SpaceRequestInput) {
+  return apiRequest<{ request: SpaceRequestItem }>('/community/space-requests', { token, method: 'POST', body: data });
+}
+
+export async function updateSpaceRequest(token: string | null, id: number, data: SpaceRequestInput) {
+  return apiRequest<{ request: SpaceRequestItem }>(`/community/space-requests/${id}`, { token, method: 'PUT', body: data });
 }
 
 export async function getMySpaceRequests(token: string | null) {
-  return apiRequest('/community/space-requests/mine', { token });
+  return apiRequest<{ requests: SpaceRequestItem[] }>('/community/space-requests/mine', { token });
 }
 
 // Posts
@@ -86,33 +119,62 @@ export async function getSpacePosts(token: string | null, spaceId: number) {
   return apiRequest<PostPage>(`/community/spaces/${spaceId}/posts`, { token });
 }
 
-export async function createPost(token: string | null, spaceId: number, data: { type: string; body: string; payload?: Record<string, unknown>; audience: 'own_gender' | 'everyone' }) {
-  return apiRequest(`/community/spaces/${spaceId}/posts`, { token, method: 'POST', body: data });
+export async function getPendingPosts(token: string | null, spaceId: number) {
+  return apiRequest<PostPage>(`/community/spaces/${spaceId}/pending-posts`, { token });
 }
 
-export async function updatePost(token: string | null, id: number, data: { body: string; payload?: Record<string, unknown> }) {
-  return apiRequest(`/community/posts/${id}`, { token, method: 'PUT', body: data });
+export async function getUpcomingEvents(token: string | null) {
+  return apiRequest<PostPage>('/community/events', { token });
 }
 
+export async function getSavedPosts(token: string | null) {
+  return apiRequest<PostPage>('/community/saved-posts', { token });
+}
+
+export async function getPost(token: string | null, id: number) {
+  return apiRequest<{ post: CommunityPost }>(`/community/posts/${id}`, { token });
+}
+
+export async function createPost(token: string | null, spaceId: number, data: NewPost) {
+  return apiRequest<{ post: { id: number; status: CommunityPost['status'] } }>(`/community/spaces/${spaceId}/posts`, {
+    token,
+    method: 'POST',
+    body: data,
+  });
+}
+
+export async function updatePost(token: string | null, id: number, body: string) {
+  return apiRequest<{ post: CommunityPost }>(`/community/posts/${id}`, { token, method: 'PUT', body: { body } });
+}
+
+/** The author deletes; the space's owner or a moderator hides. */
 export async function deletePost(token: string | null, id: number) {
   return apiRequest(`/community/posts/${id}`, { token, method: 'DELETE' });
 }
 
-export async function savePost(token: string | null, id: number) {
-  return apiRequest(`/community/posts/${id}/save`, { token, method: 'POST', body: {} });
+export async function reviewPost(token: string | null, id: number, decision: 'approve' | 'reject') {
+  return apiRequest(`/community/posts/${id}/${decision}`, { token, method: 'POST', body: {} });
+}
+
+export async function setPostSaved(token: string | null, id: number, saved: boolean) {
+  return apiRequest(`/community/posts/${id}/save`, { token, method: saved ? 'POST' : 'DELETE', body: saved ? {} : undefined });
 }
 
 export async function importPost(token: string | null, id: CommunityPost['id']) {
   return apiRequest<ImportResult>(`/community/posts/${id}/import`, { token, method: 'POST', body: {} });
 }
 
-// Comments
+// Comments (always the viewer's own gender)
 export async function getComments(token: string | null, postId: number) {
-  return apiRequest(`/community/posts/${postId}/comments`, { token });
+  return apiRequest<{ comments: CommunityComment[] }>(`/community/posts/${postId}/comments`, { token });
 }
 
-export async function createComment(token: string | null, postId: number, data: { body: string }) {
-  return apiRequest(`/community/posts/${postId}/comments`, { token, method: 'POST', body: data });
+export async function createComment(token: string | null, postId: number, data: { body: string; parent_id?: number | null }) {
+  return apiRequest<{ comment: CommunityComment }>(`/community/posts/${postId}/comments`, { token, method: 'POST', body: data });
+}
+
+export async function updateComment(token: string | null, id: number, body: string) {
+  return apiRequest<{ comment: CommunityComment }>(`/community/comments/${id}`, { token, method: 'PUT', body: { body } });
 }
 
 export async function deleteComment(token: string | null, id: number) {
@@ -153,55 +215,97 @@ export async function removeReaction(token: string | null, messageId: number, em
 }
 
 // Safety
-export async function createReport(token: string | null, data: { target_type: string; target_id: number; reason: string; details: string; revealed_content?: string }) {
+export async function createReport(
+  token: string | null,
+  data: { target_type: ReportTarget; target_id: number; reason: ReportReason; details?: string },
+) {
   return apiRequest('/community/reports', { token, method: 'POST', body: data });
 }
 
-export async function blockUser(token: string | null, data: { target_id: number }) {
-  return apiRequest('/community/blocks', { token, method: 'POST', body: data });
+type PersonList = { items: { id: number; first_name: string; last_name: string }[] };
+
+/** Blocks hide content both ways; mutes hide someone's content from you only. */
+export async function getHidden(token: string | null, kind: 'blocks' | 'mutes') {
+  return apiRequest<PersonList>(`/community/${kind}`, { token });
 }
 
-export async function unblockUser(token: string | null, id: number) {
-  return apiRequest(`/community/blocks/${id}`, { token, method: 'DELETE' });
+export async function hidePerson(token: string | null, kind: 'blocks' | 'mutes', targetId: number) {
+  return apiRequest(`/community/${kind}`, { token, method: 'POST', body: { target_id: targetId } });
 }
 
-export async function muteUser(token: string | null, data: { target_id: number }) {
-  return apiRequest('/community/mutes', { token, method: 'POST', body: data });
+export async function unhidePerson(token: string | null, kind: 'blocks' | 'mutes', targetId: number) {
+  return apiRequest(`/community/${kind}/${targetId}`, { token, method: 'DELETE' });
 }
 
-export async function unmuteUser(token: string | null, id: number) {
-  return apiRequest(`/community/mutes/${id}`, { token, method: 'DELETE' });
+// Trusted shaykhs and fatwa
+export async function requestTrust(token: string | null, data: TrustFields) {
+  return apiRequest<{ request: TrustRequest }>('/community/shaykh-requests', { token, method: 'POST', body: data });
 }
 
-// Shaykhs and Fatwa
-export async function requestTrust(token: string | null, data: { manhaj: string; marja: string; studies?: string; ijazat?: string; teachers?: string; institution?: string; teaching?: string }) {
-  return apiRequest('/community/shaykh-requests', { token, method: 'POST', body: data });
+export async function getMyTrustRequest(token: string | null) {
+  return apiRequest<{ request: TrustRequest | null; is_shaykh: boolean }>('/community/shaykh-requests/mine', { token });
 }
 
 export async function getShaykhs(token: string | null) {
-  return apiRequest('/community/shaykhs', { token });
+  return apiRequest<{ shaykhs: ShaykhProfile[] }>('/community/shaykhs', { token });
 }
 
-export async function askQuestion(token: string | null, data: { shaykh_gender: 'male' | 'female'; target_shaykh_id?: number; body: string; show_asker_gender: boolean }) {
-  return apiRequest('/community/fatwa-questions', { token, method: 'POST', body: data });
+export async function getShaykh(token: string | null, id: number) {
+  return apiRequest<{ shaykh: ShaykhProfile; fatwas: PublishedFatwa[] }>(`/community/shaykhs/${id}`, { token });
+}
+
+export async function getFatwas(token: string | null) {
+  return apiRequest<{ fatwas: PublishedFatwa[] }>('/community/fatwas', { token });
+}
+
+/** An open question (to the shaykhs of one gender) or one to a specific shaykh. */
+export async function askQuestion(
+  token: string | null,
+  data: { body: string; show_asker_gender: boolean; shaykh_gender?: Gender; target_shaykh_id?: number },
+) {
+  return apiRequest<{ question: { id: number } }>('/community/fatwa-questions', { token, method: 'POST', body: data });
 }
 
 export async function getMyQuestions(token: string | null) {
-  return apiRequest('/community/fatwa/mine', { token });
+  return apiRequest<{ questions: MyQuestion[] }>('/community/fatwa/mine', { token });
 }
 
-export async function getPublishedFatwas(token: string | null) {
-  return apiRequest('/community/fatwas', { token });
+export async function closeQuestion(token: string | null, id: number) {
+  return apiRequest(`/community/fatwa-questions/${id}/close`, { token, method: 'POST', body: {} });
+}
+
+export async function getFatwaInbox(token: string | null) {
+  return apiRequest<{ threads: FatwaThreadSummary[]; open_questions: QuestionForShaykh[] }>('/community/fatwa/inbox', { token });
+}
+
+export async function takeQuestion(token: string | null, id: number, body: string, answered: boolean) {
+  return apiRequest<{ thread: { id: number } }>(`/community/fatwa-questions/${id}/take`, { token, method: 'POST', body: { body, answered } });
+}
+
+export async function declineQuestion(token: string | null, id: number) {
+  return apiRequest(`/community/fatwa-questions/${id}/decline`, { token, method: 'POST', body: {} });
+}
+
+export async function getFatwaThread(token: string | null, id: number) {
+  return apiRequest<{ thread: FatwaThreadDetail }>(`/community/fatwa-threads/${id}`, { token });
+}
+
+export async function sendFatwaMessage(token: string | null, id: number, body: string, answered = false) {
+  return apiRequest<{ thread: FatwaThreadDetail }>(`/community/fatwa-threads/${id}/messages`, { token, method: 'POST', body: { body, answered } });
+}
+
+export async function declineThread(token: string | null, id: number) {
+  return apiRequest(`/community/fatwa-threads/${id}/decline`, { token, method: 'POST', body: {} });
+}
+
+export async function referThread(token: string | null, id: number, shaykhId: number) {
+  return apiRequest(`/community/fatwa-threads/${id}/refer`, { token, method: 'POST', body: { shaykh_id: shaykhId } });
 }
 
 export async function proposePublish(token: string | null, threadId: number, data: { question_text: string; answer_text: string }) {
   return apiRequest(`/community/fatwa-threads/${threadId}/publish-proposal`, { token, method: 'POST', body: data });
 }
 
-export async function approveFatwa(token: string | null, publicationId: number) {
-  return apiRequest(`/community/fatwa-publications/${publicationId}/approve`, { token, method: 'POST', body: {} });
-}
-
-export async function refuseFatwa(token: string | null, publicationId: number) {
-  return apiRequest(`/community/fatwa-publications/${publicationId}/refuse`, { token, method: 'POST', body: {} });
+export async function decidePublication(token: string | null, publicationId: number, decision: 'approve' | 'refuse') {
+  return apiRequest(`/community/fatwa-publications/${publicationId}/${decision}`, { token, method: 'POST', body: {} });
 }

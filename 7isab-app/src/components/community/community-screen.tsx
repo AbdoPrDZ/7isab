@@ -59,12 +59,6 @@ function CommunityMenu({ visible, onClose }: { visible: boolean; onClose: () => 
     router.push(href);
   };
 
-  const later = [
-    t('community.menu.mySpaces'),
-    t('community.menu.myRequests'),
-    t('community.menu.saved'),
-    t('community.menu.events'),
-  ];
 
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
@@ -85,11 +79,11 @@ function CommunityMenu({ visible, onClose }: { visible: boolean; onClose: () => 
             </View>
             <Divider />
             <Row title={t('community.menu.settings')} chevron onPress={() => open('/community/settings')} />
+            <Row title={t('community.menu.mySpaces')} chevron onPress={() => open('/community/groups')} />
+            <Row title={t('community.menu.myRequests')} chevron onPress={() => open('/community/requests')} />
+            <Row title={t('community.menu.saved')} chevron onPress={() => open('/community/saved')} />
+            <Row title={t('community.menu.events')} chevron onPress={() => open('/community/events')} />
             <Row title={t('community.menu.rules')} chevron onPress={() => open('/community/rules')} />
-            <Divider />
-            {later.map((label) => (
-              <Row key={label} title={label} subtitle={t('home.comingSoon')} />
-            ))}
             <Divider />
             <Row
               title={t('community.menu.back')}

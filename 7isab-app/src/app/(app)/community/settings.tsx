@@ -6,7 +6,7 @@ import { Alert, StyleSheet, View } from 'react-native';
 import { backTo7isab } from '@/components/community/community-screen';
 import { AppText } from '@/components/ui/app-text';
 import { Button } from '@/components/ui/button';
-import { Card, Screen, Section } from '@/components/ui/layout';
+import { Card, Row, Screen, Section } from '@/components/ui/layout';
 import { TextField } from '@/components/ui/text-field';
 import { Spacing } from '@/constants/theme';
 import { ApiError } from '@/lib/api/client';
@@ -83,6 +83,10 @@ export default function CommunitySettingsScreen() {
         <AppText variant="caption" color="textSecondary">
           {t('community.settings.genderHint')}
         </AppText>
+      </Section>
+
+      <Section title={t('community.hidden.title')}>
+        <Row title={t('community.hidden.manage')} chevron onPress={() => router.push('/community/hidden')} />
       </Section>
 
       <Section title={t('community.settings.leaveTitle')}>

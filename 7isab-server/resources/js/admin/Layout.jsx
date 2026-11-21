@@ -68,6 +68,10 @@ export default function Layout() {
         { to: '/admin/users', label: t('users') },
         { to: '/admin/community/members', label: t('community.members') },
         { to: '/admin/community/rules', label: t('community.rules') },
+        { to: '/admin/community/space-requests', label: t('spaces.requests') },
+        { to: '/admin/community/spaces', label: t('spaces.title') },
+        { to: '/admin/community/reports', label: t('reports.title') },
+        { to: '/admin/community/shaykhs', label: t('shaykhs.title') },
         ...(isSuperAdmin ? [{ to: '/admin/admins', label: t('admins') }] : []),
     ];
 

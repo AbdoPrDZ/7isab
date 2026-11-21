@@ -6,6 +6,8 @@
     <meta name="robots" content="noindex, nofollow">
     <title>7isab · Admin</title>
     @fonts
+    {{-- React Fast Refresh preamble for the Vite dev server (no output in a production build). --}}
+    @viteReactRefresh
     @vite(['resources/css/admin.css', 'resources/js/admin/main.jsx'])
 </head>
 <body class="antialiased">

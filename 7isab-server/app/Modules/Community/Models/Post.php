@@ -16,11 +16,13 @@ class Post extends Model
 
     protected $casts = [
         'payload' => 'json',
+        'edited_at' => 'datetime',
     ];
 
     /**
-     * Published posts the profile may see: in an active space open to their
-     * gender, and either for everyone or written by someone of their gender.
+     * Published posts the profile may read: in an active space open to their
+     * gender that they belong to (an active member or follower, the owner or a
+     * moderator), and either for everyone or written by someone of their gender.
      */
     public function scopeVisibleTo(Builder $query, CommunityProfile $profile): Builder
     {
@@ -28,7 +30,10 @@ class Post extends Model
             ->where('status', 'published')
             ->whereHas('space', fn (Builder $space) => $space
                 ->where('status', 'active')
-                ->where(fn (Builder $gender) => $gender->whereNull('gender')->orWhere('gender', $profile->gender)))
+                ->where(fn (Builder $gender) => $gender->whereNull('gender')->orWhere('gender', $profile->gender))
+                ->whereHas('members', fn (Builder $member) => $member
+                    ->where('profile_id', $profile->id)
+                    ->where('status', 'active')))
             ->where(fn (Builder $audience) => $audience
                 ->where('audience', 'everyone')
                 ->orWhereHas('author', fn (Builder $author) => $author->where('gender', $profile->gender)));

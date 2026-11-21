@@ -106,7 +106,8 @@ export default function CommunityMembers() {
                                         <tr key={member.id} className="border-t border-line align-top dark:border-night-line">
                                             <td className="px-4 py-3">
                                                 <div className="font-medium">
-                                                    {member.first_name} {member.last_name}
+                                                    {member.first_name} {member.last_name}{' '}
+                                                    <span className="text-xs font-normal text-ink-soft dark:text-night-ink-soft">#{member.id}</span>
                                                 </div>
                                                 <Link to={`/admin/users/${member.user_id}`} className="text-xs text-emerald hover:underline dark:text-mint">
                                                     {member.email}

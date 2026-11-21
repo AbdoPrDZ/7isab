@@ -84,7 +84,7 @@ export default function CommunityFeedScreen() {
       ) : null}
 
       {feed.status === 'ready'
-        ? feed.posts.map((post) => <PostCard key={post.id} post={post} onImport={setImporting} />)
+        ? feed.posts.map((post) => <PostCard key={post.id} post={post} showSpace onImport={setImporting} />)
         : null}
 
       <ImportSheet post={importing} onClose={closeImport} />

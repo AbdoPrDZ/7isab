@@ -49,7 +49,11 @@ export type Alarm = Doc & {
   taskId?: string;
 };
 
-export type AlarmInput = Omit<Alarm, 'id' | 'createdAt' | 'updatedAt' | 'onceDate'> & { id?: string };
+/**
+ * A one-time alarm rings today or tomorrow (recomputed on every save, so re-enabling
+ * an old one works), unless `onDay` gives its day (e.g. an event reminder).
+ */
+export type AlarmInput = Omit<Alarm, 'id' | 'createdAt' | 'updatedAt' | 'onceDate'> & { id?: string; onDay?: string };
 
 export function useAlarms(): Alarm[] {
   return useDocs<Alarm>(RecordTypes.alarm);
@@ -99,11 +103,11 @@ function onceDateFor(time: AlarmTime): string {
   return at && at > now ? today() : addDays(today(), 1);
 }
 
-export async function saveAlarm(input: AlarmInput): Promise<Alarm> {
+export async function saveAlarm({ onDay, ...input }: AlarmInput): Promise<Alarm> {
   const alarm = await putDoc<Alarm>(RecordTypes.alarm, {
     ...input,
     id: input.id ?? newId(),
-    onceDate: input.days.length ? null : onceDateFor(input.time),
+    onceDate: input.days.length ? null : (onDay ?? onceDateFor(input.time)),
   });
   // Saved even if scheduling fails (no permission yet, …); it is retried when the app opens.
   await rescheduleAlarms(true).catch(() => undefined);

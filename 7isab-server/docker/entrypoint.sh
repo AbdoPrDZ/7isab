@@ -13,11 +13,21 @@ fi
 mkdir -p storage/app/public storage/framework/cache/data storage/framework/sessions storage/framework/views storage/logs
 chown -R www-data:www-data storage bootstrap/cache
 
-php artisan migrate --force
-php artisan db:seed --force
+# Only the web container migrates; the queue, scheduler and Reverb containers
+# set RUN_MIGRATIONS=false so they don't race it.
+if [ "${RUN_MIGRATIONS:-true}" != "false" ]; then
+  php artisan migrate --force
+  php artisan db:seed --force
+fi
 php artisan config:cache
 php artisan route:cache
 php artisan view:cache
+
+# A service with its own command (queue worker, scheduler, Reverb) runs that instead of the web server.
+# It runs as www-data, like PHP-FPM, so files it writes stay readable by the web server.
+if [ "$#" -gt 0 ]; then
+  exec su-exec www-data "$@"
+fi
 
 php-fpm -D
 exec nginx -g 'daemon off;'
