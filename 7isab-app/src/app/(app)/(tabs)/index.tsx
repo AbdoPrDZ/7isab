@@ -264,6 +264,14 @@ export default function TodayScreen() {
           onPress={() => router.push({ pathname: '/hisab/action', params: { kind: 'sadaqa' } })}
         />
       </View>
+
+      <View style={styles.quick}>
+        <Button
+          title="Community"
+          variant="secondary"
+          onPress={() => router.push('/community/feed')}
+        />
+      </View>
     </Screen>
   );
 }

@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { Colors } from '@/constants/theme';
 import { CommunityPost, ProgramPayload, TestamentPayload } from '@/lib/community/types';
@@ -47,6 +47,13 @@ function TestamentPostCard({ post, onImport }: PostCardProps) {
       <Text style={styles.body}>{post.body}</Text>
       {payload?.text && <Text style={styles.testament}>{payload.text}</Text>}
       {payload?.source && <Text style={styles.source}>— {payload.source}</Text>}
+      {onImport && (
+        <Pressable
+          onPress={() => onImport(post)}
+          style={({ pressed }) => [styles.importButton, pressed && styles.importButtonPressed]}>
+          <Text style={styles.importButtonText}>Import</Text>
+        </Pressable>
+      )}
     </View>
   );
 }
@@ -78,6 +85,13 @@ function ProgramPostCard({ post, onImport }: PostCardProps) {
             </Text>
           )}
         </View>
+      )}
+      {onImport && (
+        <Pressable
+          onPress={() => onImport(post)}
+          style={({ pressed }) => [styles.importButton, pressed && styles.importButtonPressed]}>
+          <Text style={styles.importButtonText}>Import</Text>
+        </Pressable>
       )}
     </View>
   );
@@ -148,5 +162,21 @@ const styles = StyleSheet.create({
     fontSize: 11,
     color: Colors.light.textSecondary,
     marginTop: 2,
+  },
+  importButton: {
+    marginTop: 12,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    backgroundColor: Colors.light.primary,
+    borderRadius: 6,
+    alignItems: 'center',
+  },
+  importButtonPressed: {
+    opacity: 0.8,
+  },
+  importButtonText: {
+    color: Colors.light.textOnPrimary,
+    fontSize: 14,
+    fontWeight: '600',
   },
 });
