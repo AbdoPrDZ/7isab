@@ -28,9 +28,12 @@ Plan: [../plans/COMMUNITY.md](../plans/COMMUNITY.md). Design: [../blueprints/COM
 - [ ] Reports, blocks, mutes; admin reports queue
 
 ## Phase 4: shared items and events
-- [ ] Testament, program and event posts
-- [ ] Importing into the app's private data
-- [ ] Event reminders
+- [x] Server: TestamentTemplate and ProgramTemplate models with migrations
+- [x] Server: PostController.store() creates templates when posting testament/program types
+- [x] Server: Import endpoint records imports and returns template data
+- [x] Tests: 6 feature tests all passing for creation and import validation
+- [ ] (Core done, app-side next) App: API integration and types for Testament/Program posts
+- [ ] (Deferred to 4b) Event posts and event reminders
 
 ## Phase 5: trusted shaykhs and fatwa
 - [ ] Trust requests, review, shaykh profiles (manhaj, marja')

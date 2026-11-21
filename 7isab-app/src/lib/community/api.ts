@@ -93,6 +93,15 @@ export async function importPost(id: number) {
   return apiRequest(`/community/posts/${id}/import`, { method: 'POST', body: {} });
 }
 
+// Template fetching (for imports)
+export async function getTestamentTemplate(templateId: number) {
+  return apiRequest(`/community/testament-templates/${templateId}`);
+}
+
+export async function getProgramTemplate(templateId: number) {
+  return apiRequest(`/community/program-templates/${templateId}`);
+}
+
 // Comments
 export async function getComments(postId: number) {
   return apiRequest(`/community/posts/${postId}/comments`);
