@@ -6,6 +6,7 @@ use App\Core\Enums\ValidationType;
 use App\Core\Models\Concerns\Tabling;
 use App\Enums\Role;
 use App\Enums\UserKeyType;
+use App\Modules\Community\Models\CommunityProfile;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
@@ -96,6 +97,11 @@ class User extends Authenticatable
     public function syncRecords(): HasMany
     {
         return $this->hasMany(SyncRecord::class);
+    }
+
+    public function communityProfile(): HasOne
+    {
+        return $this->hasOne(CommunityProfile::class);
     }
 
     public function isAdmin(): bool

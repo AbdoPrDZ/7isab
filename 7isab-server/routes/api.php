@@ -14,4 +14,5 @@ Route::prefix('v1')->name('v1.')->group(function (): void {
     require app_path('Modules/Admin/routes.php');
     require app_path('Modules/Quran/routes.php');
     require app_path('Modules/Sync/routes.php');
+    require app_path('Modules/Community/routes.php');
 });
