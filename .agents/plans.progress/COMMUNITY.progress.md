@@ -32,7 +32,11 @@ Plan: [../plans/COMMUNITY.md](../plans/COMMUNITY.md). Design: [../blueprints/COM
 - [x] Server: PostController.store() creates templates when posting testament/program types
 - [x] Server: Import endpoint records imports and returns template data
 - [x] Tests: 6 feature tests all passing for creation and import validation
-- [ ] (Core done, app-side next) App: API integration and types for Testament/Program posts
+- [x] App: Fixed import/export errors in PostCard, TestamentImportFlow, ProgramImportFlow
+- [x] App: Created community feed screen with post loading and display
+- [x] App: Added import buttons and TestamentImportFlow/ProgramImportFlow modals
+- [x] App: Wired Community button on home tab for navigation to /community/feed
+- [ ] App: Device test — post testament/program, import, verify in vault
 - [ ] (Deferred to 4b) Event posts and event reminders
 
 ## Phase 5: trusted shaykhs and fatwa
