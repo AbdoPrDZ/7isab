@@ -9,11 +9,13 @@ import { TestamentImportFlow } from '@/components/community/TestamentImportFlow'
 import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { getCommunityFeed } from '@/lib/community/api';
+import { useSession } from '@/lib/session/session-provider';
 import type { CommunityPost } from '@/lib/community/types';
 
 export default function CommunityFeedScreen() {
   const theme = useTheme();
   const insets = useSafeAreaInsets();
+  const { token } = useSession();
   const [posts, setPosts] = useState<CommunityPost[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -24,7 +26,7 @@ export default function CommunityFeedScreen() {
     try {
       setLoading(true);
       setError(null);
-      const data = await getCommunityFeed();
+      const data = await getCommunityFeed(token || '');
       const postsData = Array.isArray(data) ? data : (data as any)?.posts || [];
       setPosts(postsData);
     } catch (err) {
@@ -33,7 +35,7 @@ export default function CommunityFeedScreen() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [token]);
 
   useFocusEffect(
     useCallback(() => {

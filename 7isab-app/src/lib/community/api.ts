@@ -65,8 +65,8 @@ export async function getMySpaceRequests() {
 }
 
 // Posts
-export async function getCommunityFeed() {
-  return apiRequest('/community/feed');
+export async function getCommunityFeed(token: string) {
+  return apiRequest('/community/feed', { token });
 }
 
 export async function getSpacePosts(spaceId: number) {
