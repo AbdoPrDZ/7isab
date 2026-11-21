@@ -259,3 +259,20 @@ export function AlarmIcon(props: IconProps) {
     </Icon>
   );
 }
+
+export function SearchIcon(props: IconProps) {
+  return (
+    <Icon {...props}>
+      <Circle cx="11" cy="11" r="7" />
+      <Path d="m20 20-3.5-3.5" />
+    </Icon>
+  );
+}
+
+export function PencilIcon(props: IconProps) {
+  return (
+    <Icon {...props}>
+      <Path d="M4 20h4L18.5 9.5a2.1 2.1 0 0 0-3-3L5 17v3zM13.5 6.5l3 3" />
+    </Icon>
+  );
+}

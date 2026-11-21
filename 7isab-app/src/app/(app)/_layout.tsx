@@ -27,6 +27,7 @@ import { settlePrayers, syncPrayerTasks } from '@/lib/prayer/tasks';
 import { settleBedtime, syncBedtimeTask } from '@/lib/bedtime/bedtime';
 import { watchBedtime } from '@/lib/bedtime/notifications';
 import { watchReports } from '@/lib/reports/notifications';
+import { watchTestaments } from '@/lib/testaments/notifications';
 import { BedtimeSheet } from '@/components/bedtime/bedtime-sheet';
 
 setupPrayerNotifications();
@@ -138,6 +139,12 @@ export default function AppLayout() {
   useEffect(() => {
     if (status !== 'open') return;
     return watchReports();
+  }, [status]);
+
+  // Testament reminders (random and fixed times, per category).
+  useEffect(() => {
+    if (status !== 'open') return;
+    return watchTestaments();
   }, [status]);
 
   // While the app is open, a prayer whose deadline passes unmarked is counted as missed within a minute.

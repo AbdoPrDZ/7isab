@@ -46,23 +46,28 @@ Or run everything for development with `composer run dev`.
 
 ## Docker
 
-One container runs PHP-FPM and nginx; PostgreSQL runs next to it. The admin panel is built inside the image.
+One container runs PHP-FPM and nginx, and the admin panel is built inside the image. It uses a shared PostgreSQL container (`it-pg-db`) on the external `it-db-net` network; a local `db` service is in `docker-compose.yml`, commented out.
 
 ```bash
-cp .env.example .env
-# In .env set at least:
+cp .env.docker.example .env.docker
+# In .env.docker set at least (never commit it):
 #   APP_KEY=        (php artisan key:generate --show, or any base64:… 32-byte key)
-#   APP_ENV=production  APP_DEBUG=false  APP_URL=https://your-domain
-#   DB_DATABASE, DB_USERNAME, DB_PASSWORD   (used for both the app and the database container)
+#   APP_URL=https://your-domain   APP_PORT=8080
+#   DB_DATABASE, DB_USERNAME, DB_PASSWORD   (a database and user on it-pg-db)
 #   SUPER_ADMIN_EMAIL, SUPER_ADMIN_PASSWORD
-docker compose up -d --build
-docker compose exec app php artisan quran:import     # once: the Quran text
+docker network create it-db-net    # once, if it doesn't exist yet
+docker compose --env-file .env.docker up -d --build
+docker compose --env-file .env.docker exec app php artisan quran:import   # once: the Quran text
 ```
 
-- The app listens on port `8000` (`APP_PORT` in `.env` changes it). Put HTTPS in front of it (a reverse proxy) for production.
-- On every start the container runs the migrations and the seeders (both safe to rerun), then caches the config and routes.
-- Data lives in the `pgdata` (database) and `storage` volumes. Logs go to `docker compose logs app`.
-- After pulling new code: `docker compose up -d --build`.
+- The image is `ghcr.io/abdoprdz/7isab-server:latest`; `--build` builds it from this folder. Rebuild only when the server code changes.
+- The app listens on `127.0.0.1:${APP_PORT}` only (default `8080`). Put a reverse proxy with HTTPS in front of it. `TRUSTED_PROXIES=*` makes Laravel trust the proxy's `X-Forwarded-*` headers so URLs are https.
+- Production values (`APP_ENV`, `APP_DEBUG`, `DB_HOST`, cache, session, queue) are set in `docker-compose.yml` and override `.env.docker`.
+- On every start the container runs the migrations and the seeders (both safe to rerun), then caches the config and routes. A health check runs on `/up`.
+- Files live in the `7isab-storage` volume. Logs go to `docker compose logs app`.
+- After pulling new code: `docker compose --env-file .env.docker up -d --build`.
+
+See [CHANGELOG.md](CHANGELOG.md) for what changed.
 
 ## Tests
 

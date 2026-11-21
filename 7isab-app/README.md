@@ -39,8 +39,8 @@ Builds go to `release/` (ignored by git), named `<slug>-<runtimeVersion>-<versio
 # Production (for upload): .env.deploy ONLY (.env is not read).
 # cp .env.deploy.example .env.deploy, then fill it in (it holds secrets; git ignores it).
 # Fails if .env.deploy is missing, a required value is empty, or a URL isn't https.
-npm run build:deploy:release   # OTA bundle → release/7isab-app-1.0.0-1.0.0.zip   (Version → Add bundle)
-npm run build:deploy:apk       # release APK → release/7isab-app-1.0.0-1.0.0.apk  (new native version)
+npm run build:deploy:release   # OTA bundle → release/7isab-app-1.1.0-0.0.2.zip   (Version → Add bundle)
+npm run build:deploy:apk       # release APK → release/7isab-app-1.1.0-0.0.2.apk  (new native version)
 npm run build:deploy:all       # both
 
 # Local test builds: .env only (e.g. your computer's server). Don't upload these.
@@ -51,7 +51,7 @@ npm run build:all
 
 Both write to the same file names, so a local build overwrites the deploy build of the same version. The `ota` / `publish:*` scripts below always use the deploy environment. `npx expo start` uses `.env`.
 
-Bump `version` in `app.json` for each OTA bundle. Change `runtimeVersion` (and create the matching version in OTACenter) whenever native code changes. For deploy builds the OTA server and key come from `.env.deploy` (`OTA_SERVER_URL`, `OTA_API_KEY`); local builds use `.env`.
+Bump `version` in `app.json` for each OTA bundle and add it to [CHANGELOG.md](CHANGELOG.md). Change `runtimeVersion` (and create the matching version in OTACenter) whenever native code changes. For deploy builds the OTA server and key come from `.env.deploy` (`OTA_SERVER_URL`, `OTA_API_KEY`); local builds use `.env`.
 
 The APK is signed with the debug key, so it's fine for your own phone.
 
@@ -84,16 +84,19 @@ npx expo lint
 ## Project layout
 
 ```text
-src/app/            screens (expo-router): (tabs), quran, prayer, qibla, calendar, alarms, wallet, stats, settings…
-src/components/     UI building blocks (ui/, prayer/, calendar/, stats/, quran/, alarms/)
+src/app/            screens (expo-router): (tabs) today / quran / athkar / wallet / stats, prayer, qibla, calendar,
+                    alarms, bedtime, report, programs, akhira-weeks, settings…
+src/components/     UI building blocks (ui/, prayer/, bedtime/, calendar/, stats/, wallet/, task/, quran/, alarms/)
 src/lib/            logic, no UI:
   data/             encrypted local vault (SQLite) and record cipher
-  ledger/           accounts, entries, tasks, presets (nafilah, fasting)
+  ledger/           accounts, entries, tasks, presets (nafilah, fasting), reasons, weekly Akhira points
   prayer/           prayer times, athan scheduling, prayer marks
   alarms/           user alarms and the native alarm bridge
   calendar/         month grids and Hijri dates
   quran/            reader, reading counter, hizb / rub' / thumn
-  wallet/ stats/    finance, saving plans, statistics
+  bedtime/          bedtime task and its notification
+  reports/ programs/ day / week / month / year reports, improvement and recovery programs
+  wallet/ stats/    finance, saving plans, debts, statistics (filters, charts, CSV export)
   sync/ session/    sync engine, sign-in, keys, app lock
 src/i18n/           Arabic, English, French
 modules/hisab-alarm Android native module: athan and alarms as alarm clocks with a full-screen page

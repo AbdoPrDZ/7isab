@@ -1,9 +1,9 @@
 {
   "expo": {
-    "name": "7isab-app",
+    "name": "حساب",
     "slug": "7isab-app",
-    "version": "0.0.1",
-    "runtimeVersion": "1.1.0",
+    "version": "0.0.5",
+    "runtimeVersion": "1.2.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "7isabapp",
@@ -42,7 +42,15 @@
       "expo-secure-store",
       "expo-localization",
       "react-native-quick-crypto",
-      "expo-sqlite"
+      "expo-sqlite",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Your profile photo is picked from your photos. It is encrypted on this phone before it is saved or synced.",
+          "cameraPermission": "The camera is used to take your profile photo. It is encrypted on this phone before it is saved or synced.",
+          "microphonePermission": false
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,

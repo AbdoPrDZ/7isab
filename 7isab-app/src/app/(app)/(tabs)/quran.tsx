@@ -1,9 +1,11 @@
 import { router } from 'expo-router';
-import { useState } from 'react';
+import { useDeferredValue, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, FlatList, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { QURAN_FONT } from '@/components/quran/mushaf-page';
+import { QuranResults } from '@/components/search/quran-results';
+import { SearchBox } from '@/components/search/search-box';
 import { AppText } from '@/components/ui/app-text';
 import { Button } from '@/components/ui/button';
 import { ScreenHeader } from '@/components/ui/screen-header';
@@ -17,6 +19,7 @@ import { divisionStartPage, hasDivisions } from '@/lib/quran/divisions';
 import { useQuranMeta } from '@/lib/quran/hooks';
 import { TOTAL_PAGES, useReadingState } from '@/lib/quran/reading';
 import type { QuranMeta, Surah } from '@/lib/quran/types';
+import { foldText } from '@/lib/search/normalize';
 
 type ListMode = 'surah' | 'juz' | 'hizb';
 
@@ -207,6 +210,16 @@ export default function QuranIndexScreen() {
   const { direction } = useDirection();
   const { data: meta, loading, error, retry } = useQuranMeta();
   const [mode, setMode] = useState<ListMode>('surah');
+  const [query, setQuery] = useState('');
+  const deferred = useDeferredValue(query);
+  const searching = deferred.trim().length >= 2;
+  const folded = foldText(deferred);
+  const surahMatches =
+    searching && meta
+      ? meta.surahs.filter((surah) =>
+          [surah.name_arabic, surah.name_simple, surah.name_english, String(surah.id)].some((name) => foldText(name).includes(folded)),
+        )
+      : [];
 
   const header = (
     <>
@@ -232,8 +245,20 @@ export default function QuranIndexScreen() {
   return (
     <View style={[styles.root, { backgroundColor: theme.background, direction }]}>
       <ScreenHeader title={t('quran.title')} subtitle={t('quran.surahs')} />
-
       {meta ? (
+        <View style={styles.searchBar}>
+          <SearchBox value={query} onChangeText={setQuery} placeholder={t('search.quranPlaceholder')} />
+        </View>
+      ) : null}
+
+      {meta && searching ? (
+        <ScrollView contentContainerStyle={[styles.list, { paddingBottom: Spacing.four }]} keyboardShouldPersistTaps="handled">
+          {surahMatches.map((surah) => (
+            <SurahRow key={surah.id} surah={surah} />
+          ))}
+          <QuranResults query={deferred} />
+        </ScrollView>
+      ) : meta ? (
         mode === 'surah' ? (
           <FlatList
             key="surah"
@@ -281,6 +306,13 @@ export default function QuranIndexScreen() {
 const styles = StyleSheet.create({
   root: {
     flex: 1,
+  },
+  searchBar: {
+    width: '100%',
+    maxWidth: MaxContentWidth,
+    alignSelf: 'center',
+    paddingHorizontal: Spacing.four,
+    paddingTop: Spacing.three,
   },
   list: {
     width: '100%',

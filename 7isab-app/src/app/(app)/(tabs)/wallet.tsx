@@ -1,8 +1,9 @@
-import { router, type Href } from 'expo-router';
-import { Fragment, useMemo, useState } from 'react';
+import { router, useLocalSearchParams, type Href } from 'expo-router';
+import { Fragment, useDeferredValue, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, Pressable, StyleSheet, View } from 'react-native';
 
+import { SearchBox } from '@/components/search/search-box';
 import { AppText } from '@/components/ui/app-text';
 import { ArchCard } from '@/components/ui/decor';
 import { Button } from '@/components/ui/button';
@@ -20,8 +21,7 @@ import { RecordTypes, type Entry } from '@/lib/ledger/types';
 import { confirmRecurring, dueForConfirmation, skipRecurring } from '@/lib/wallet/recurring';
 import type { Recurring } from '@/lib/wallet/types';
 import { netWorth, useCategories } from '@/lib/wallet/wallet';
-
-const WALLET_KINDS: Entry['kind'][] = ['income', 'expense', 'transfer', 'loan', 'top_up'];
+import { foldQuery, useWalletSearch, WALLET_KINDS } from '@/lib/search/search';
 
 export default function WalletScreen() {
   const { t } = useTranslation();
@@ -35,13 +35,26 @@ export default function WalletScreen() {
   const recurring = useDocs<Recurring>(RecordTypes.recurring);
   const { accountName, amount, format, mainCurrency } = useLedgerLabels();
   const [month, setMonth] = useState(monthOf(today()));
+  // Search over every month; global search opens the wallet with `q` filled in.
+  const params = useLocalSearchParams<{ q?: string }>();
+  const [query, setQuery] = useState(params.q ?? '');
+  const [linkedQuery, setLinkedQuery] = useState(params.q);
+  if (linkedQuery !== params.q) {
+    setLinkedQuery(params.q);
+    setQuery(params.q ?? '');
+  }
+  const deferredQuery = useDeferredValue(query);
+  const found = useWalletSearch(deferredQuery);
+  const searching = !!foldQuery(deferredQuery);
 
   const moneyAccounts = accounts.filter((account) => account.unit.kind === 'money' || account.unit.kind === 'gold');
   const active = moneyAccounts.filter((account) => !account.archived);
   const archived = moneyAccounts.filter((account) => account.archived);
   const worth = useMemo(() => netWorth(accounts, balances, mainCurrency, rates), [accounts, balances, mainCurrency, rates]);
   const due = dueForConfirmation(recurring);
-  const monthEntries = entries.filter((entry) => WALLET_KINDS.includes(entry.kind) && monthOf(entry.date) === month);
+  const monthEntries = searching
+    ? found
+    : entries.filter((entry) => WALLET_KINDS.includes(entry.kind) && monthOf(entry.date) === month);
 
   const categoryName = (id?: string) => {
     const category = categories.find((item) => item.id === id);
@@ -156,22 +169,29 @@ export default function WalletScreen() {
       </Card>
 
       <Section title={t('wallet.transactions')}>
-        <View style={styles.monthRow}>
-          <Pressable accessibilityRole="button" hitSlop={10} onPress={() => setMonth(addMonths(month, -1))}>
-            <BackIcon size={22} color={theme.primary} flip={isRtl} />
-          </Pressable>
-          <AppText variant="heading" align="center" style={styles.flex}>
-            {format.month(month)}
+        <SearchBox value={query} onChangeText={setQuery} placeholder={t('search.walletPlaceholder')} />
+        {searching ? (
+          <AppText variant="caption" color="textSecondary">
+            {t('search.walletFound', { n: format.number(found.length) })}
           </AppText>
-          <Pressable
-            accessibilityRole="button"
-            hitSlop={10}
-            disabled={month >= monthOf(today())}
-            onPress={() => setMonth(addMonths(month, 1))}
-            style={{ opacity: month >= monthOf(today()) ? 0.3 : 1 }}>
-            <BackIcon size={22} color={theme.primary} flip={!isRtl} />
-          </Pressable>
-        </View>
+        ) : (
+          <View style={styles.monthRow}>
+            <Pressable accessibilityRole="button" hitSlop={10} onPress={() => setMonth(addMonths(month, -1))}>
+              <BackIcon size={22} color={theme.primary} flip={isRtl} />
+            </Pressable>
+            <AppText variant="heading" align="center" style={styles.flex}>
+              {format.month(month)}
+            </AppText>
+            <Pressable
+              accessibilityRole="button"
+              hitSlop={10}
+              disabled={month >= monthOf(today())}
+              onPress={() => setMonth(addMonths(month, 1))}
+              style={{ opacity: month >= monthOf(today()) ? 0.3 : 1 }}>
+              <BackIcon size={22} color={theme.primary} flip={!isRtl} />
+            </Pressable>
+          </View>
+        )}
         <Card>
           {monthEntries.length ? (
             monthEntries.map((entry, index) => (
@@ -195,7 +215,7 @@ export default function WalletScreen() {
             ))
           ) : (
             <AppText variant="label" color="textSecondary" align="center">
-              {t('wallet.noTransactions')}
+              {searching ? t('search.noResults') : t('wallet.noTransactions')}
             </AppText>
           )}
         </Card>

@@ -29,6 +29,8 @@ type ScreenProps = {
   subtitle?: string;
   /** Show a back button (stack screens). */
   back?: boolean;
+  /** Content before the title (e.g. the profile photo on Home). */
+  headerStart?: ReactNode;
   headerEnd?: ReactNode;
   children: ReactNode;
   /** Extra content pinned below the scroll view (e.g. a save button). */
@@ -37,7 +39,7 @@ type ScreenProps = {
   inTabs?: boolean;
 };
 
-export function Screen({ title, subtitle, back = false, headerEnd, children, footer, inTabs = false }: ScreenProps) {
+export function Screen({ title, subtitle, back = false, headerStart, headerEnd, children, footer, inTabs = false }: ScreenProps) {
   const { t } = useTranslation();
   const theme = useTheme();
   const { direction } = useDirection();
@@ -46,7 +48,7 @@ export function Screen({ title, subtitle, back = false, headerEnd, children, foo
 
   return (
     <View style={[styles.root, { backgroundColor: theme.background, direction }]}>
-      <ScreenHeader title={title} subtitle={subtitle} backLabel={back ? t('settings.back') : undefined} end={headerEnd} />
+      <ScreenHeader title={title} subtitle={subtitle} backLabel={back ? t('settings.back') : undefined} start={headerStart} end={headerEnd} />
       {/* The keyboard pushes the content and the footer (e.g. Save) up instead of covering them;
           Android draws edge-to-edge, so it needs the padding too. */}
       <KeyboardAvoidingView style={styles.root} behavior="padding">

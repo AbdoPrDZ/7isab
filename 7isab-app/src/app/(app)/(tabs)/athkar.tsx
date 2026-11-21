@@ -1,7 +1,10 @@
 import { router } from 'expo-router';
+import { useDeferredValue, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, View } from 'react-native';
 
+import { SearchBox } from '@/components/search/search-box';
+import { SearchGroups } from '@/components/search/search-results';
 import { AppText } from '@/components/ui/app-text';
 import { BeadsIcon, CheckIcon } from '@/components/ui/icons';
 import { Card, Screen } from '@/components/ui/layout';
@@ -11,6 +14,7 @@ import { useTheme } from '@/hooks/use-theme';
 import { isListComplete, useAthkarCounts, useAthkarList } from '@/lib/athkar/athkar';
 import { ATHKAR_LIST_IDS, type AthkarListId } from '@/lib/athkar/data';
 import { useFormat } from '@/lib/format';
+import { foldQuery, useEverythingSearch } from '@/lib/search/search';
 
 function ListCard({ listId }: { listId: AthkarListId }) {
   const { t } = useTranslation();
@@ -47,14 +51,31 @@ function ListCard({ listId }: { listId: AthkarListId }) {
 export default function AthkarScreen() {
   const { t } = useTranslation();
   const { direction } = useDirection();
+  const [query, setQuery] = useState('');
+  const deferred = useDeferredValue(query);
+  const results = useEverythingSearch(deferred).filter((group) => group.id === 'athkar');
+  const searching = !!foldQuery(deferred);
 
   return (
     <Screen inTabs title={t('athkar.title')} subtitle={t('athkar.subtitle')}>
-      <View style={[styles.list, { direction }]}>
-        {ATHKAR_LIST_IDS.map((listId) => (
-          <ListCard key={listId} listId={listId} />
-        ))}
-      </View>
+      <SearchBox value={query} onChangeText={setQuery} placeholder={t('search.athkarPlaceholder')} />
+      {searching ? (
+        results.length ? (
+          <SearchGroups groups={results} />
+        ) : (
+          <Card>
+            <AppText variant="label" color="textSecondary" align="center">
+              {t('search.noResults')}
+            </AppText>
+          </Card>
+        )
+      ) : (
+        <View style={[styles.list, { direction }]}>
+          {ATHKAR_LIST_IDS.map((listId) => (
+            <ListCard key={listId} listId={listId} />
+          ))}
+        </View>
+      )}
     </Screen>
   );
 }

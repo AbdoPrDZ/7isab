@@ -29,6 +29,8 @@ export const RecordTypes = {
   program: 'program',
   relapse: 'relapse',
   statsFilter: 'stats_filter',
+  testament: 'testament',
+  profile: 'profile',
 } as const;
 
 export type FixedAccountKey = 'akhira' | 'thanb' | 'sadaqa' | 'zakat' | 'cash';
@@ -116,6 +118,36 @@ export type Settings = Doc & {
   bedtime?: BedtimeSettings;
   /** Report notifications and rating thresholds (missing = defaults, see lib/reports). */
   reports?: ReportSettings;
+  /** Home shows the weekly Akhira points, reset every Saturday 00:00 (see lib/ledger/weekly). */
+  weeklyAkhira?: boolean;
+  /** Testament reminders per category (missing = defaults, see lib/testaments). */
+  testaments?: Partial<Record<TestamentCategory, TestamentSchedule>>;
+};
+
+/** Testaments (توصيات): reminders of Jannah, Nar, advice for the Akhira and the Dunya, and athkar to say. */
+export type TestamentCategory = 'jannah' | 'nar' | 'akhira' | 'dunya' | 'athkar';
+
+export type Testament = Doc & {
+  category: TestamentCategory;
+  /** The user's text ('' for presets: their text comes from lib/testaments/presets). */
+  text: string;
+  /** Where it's from (a book, a person…), optional. */
+  source?: string;
+  /** Preset key (built-in Testament). */
+  preset?: string;
+  enabled: boolean;
+  order: number;
+};
+
+/** When a category's Testaments notify. Times are minutes since 00:00. */
+export type TestamentSchedule = {
+  enabled: boolean;
+  /** Random reminders per day inside [from, to). */
+  random: number;
+  from: number;
+  to: number;
+  /** Fixed times, every day. */
+  times: number[];
 };
 
 export type ReportPeriod = 'day' | 'week' | 'month' | 'year';

@@ -58,7 +58,7 @@ export function HisabQuickActions() {
         <Button title={t('hisab.giveSadaqa')} style={styles.action} variant="secondary" onPress={() => action('sadaqa')} />
         <Button title={t('hisab.payZakat')} style={styles.action} variant="secondary" onPress={() => action('zakat')} />
         <Button title={t('hisab.topUp')} style={styles.action} variant="secondary" onPress={() => action('topUp')} />
-        <Button title={t('hisab.logSin')} style={styles.action} variant="secondary" onPress={() => router.push('/sins')} />
+        <Button title={t('today.logSin')} style={styles.action} variant="secondary" onPress={() => router.push('/sins')} />
       </View>
     </Section>
   );

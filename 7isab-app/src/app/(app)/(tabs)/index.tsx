@@ -5,9 +5,10 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { BedtimeCard } from '@/components/bedtime/bedtime-card';
 import { HisabQuickActions, NegativeWarnings } from '@/components/hisab/quick-actions';
 import { PrayerCard } from '@/components/prayer/prayer-card';
+import { ProfileAvatar } from '@/components/profile-avatar';
 import { AppText } from '@/components/ui/app-text';
 import { Button } from '@/components/ui/button';
-import { AlarmIcon, BookIcon, CalendarIcon, CheckIcon, MinusIcon, PlusIcon, SettingsIcon } from '@/components/ui/icons';
+import { AlarmIcon, BookIcon, CalendarIcon, CheckIcon, MinusIcon, PlusIcon, SearchIcon, SettingsIcon } from '@/components/ui/icons';
 import { Card, Divider, IconButton, Row, Screen, Section, SectionAction } from '@/components/ui/layout';
 import { Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
@@ -17,6 +18,7 @@ import { today } from '@/lib/dates';
 import { useDocs } from '@/lib/data/vault';
 import { useAccounts, useBalances, useLedgerLabels, useTasks } from '@/lib/ledger/hooks';
 import { nafilahWindow } from '@/lib/ledger/presets';
+import { useWeeklyAkhira, useWeeklyAkhiraEnabled } from '@/lib/ledger/weekly';
 import {
   addProgress,
   daysLeft,
@@ -130,6 +132,8 @@ export default function TodayScreen() {
   // Prayer tasks are checked on the prayer card.
   const dueTasks = tasks.filter((task) => isDue(task, day) && task.kind !== 'prayer' && task.kind !== 'bedtime');
   const fixed = accounts.filter((account) => account.fixed);
+  const weeklyOn = useWeeklyAkhiraEnabled();
+  const weeklyPoints = useWeeklyAkhira();
 
   const greeting = t(greetingKey());
   const title = user?.name ? t('home.greetingName', { greeting, name: user.name.split(' ')[0] }) : greeting;
@@ -139,9 +143,13 @@ export default function TodayScreen() {
     <Screen
       inTabs
       title={title}
+      headerStart={<ProfileAvatar size={40} tone="onHero" onPress={() => router.push('/settings')} />}
       subtitle={[format.day(day, 'long'), hijri ? format.digits(hijri) : null].filter(Boolean).join(' · ')}
       headerEnd={
         <View style={styles.headerButtons}>
+          <IconButton label={t('search.title')} tone="onHero" onPress={() => router.push('/search')}>
+            <SearchIcon size={22} color={theme.onHero} />
+          </IconButton>
           <IconButton label={t('alarm.listTitle')} tone="onHero" onPress={() => router.push('/alarms')}>
             <AlarmIcon size={22} color={theme.onHero} />
           </IconButton>
@@ -159,19 +167,25 @@ export default function TodayScreen() {
         <Row title={t('report.todayReport')} subtitle={t('report.todayReportHint')} chevron onPress={() => router.push('/report')} />
         <Divider />
         <Row title={t('programs.title')} subtitle={t('programs.todayHint')} chevron onPress={() => router.push('/programs')} />
+        <Divider />
+        <Row title={t('testaments.title')} subtitle={t('testaments.todayHint')} chevron onPress={() => router.push('/testaments')} />
       </Card>
 
       <NegativeWarnings />
       <Section title={t('today.balances')}>
         <View style={styles.balances}>
           {fixed.map((account) => {
-            const value = balances.get(account.id) ?? 0;
+            const real = balances.get(account.id) ?? 0;
+            const weekly = weeklyOn && account.fixed === 'akhira';
+            const value = weekly ? weeklyPoints : real;
             const negative = value < 0 && account.fixed !== 'akhira';
             return (
               <Pressable
                 key={account.id}
                 accessibilityRole="button"
-                onPress={() => router.push({ pathname: '/stats', params: { section: 'akhira' } })}
+                onPress={() =>
+                  weekly ? router.push('/akhira-weeks') : router.push({ pathname: '/stats', params: { section: 'akhira' } })
+                }
                 style={[
                   styles.balance,
                   {
@@ -185,6 +199,11 @@ export default function TodayScreen() {
                 <AppText variant="label" weight="bold" color={negative ? 'danger' : 'text'} numberOfLines={1}>
                   {amount(account, value)}
                 </AppText>
+                {weekly ? (
+                  <AppText variant="caption" color="textSecondary" numberOfLines={1}>
+                    {t('weekly.realShort', { value: format.points(real) })}
+                  </AppText>
+                ) : null}
               </Pressable>
             );
           })}

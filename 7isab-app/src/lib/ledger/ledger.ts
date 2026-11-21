@@ -16,6 +16,7 @@ import {
 } from '@/lib/data/vault';
 
 import { ensureReasonPresets } from './reasons';
+import { ensureTestamentPresets } from '@/lib/testaments/testaments';
 import {
   RecordTypes,
   type Account,
@@ -169,6 +170,7 @@ export async function ensureDefaults(mainCurrency: string): Promise<void> {
   }
 
   await ensureReasonPresets();
+  await ensureTestamentPresets();
 }
 
 export function getSettings(): Settings {

@@ -16,12 +16,14 @@ type ScreenHeaderProps = {
   subtitle?: string;
   /** Shows a back button with this label; leave out on tab screens. */
   backLabel?: string;
+  /** Content before the title (after the back button). */
+  start?: ReactNode;
   /** Extra content on the end side of the title row. */
   end?: ReactNode;
 };
 
 /** Emerald patterned header with a back button that points the right way in RTL. */
-export function ScreenHeader({ title, subtitle, backLabel, end }: ScreenHeaderProps) {
+export function ScreenHeader({ title, subtitle, backLabel, start, end }: ScreenHeaderProps) {
   const theme = useTheme();
   const { isRtl } = useDirection();
 
@@ -40,6 +42,7 @@ export function ScreenHeader({ title, subtitle, backLabel, end }: ScreenHeaderPr
               <BackIcon size={26} color={theme.onHero} flip={isRtl} />
             </Pressable>
           ) : null}
+          {start}
           <View style={styles.titles}>
             <AppText variant="heading" color="onHero">
               {title}

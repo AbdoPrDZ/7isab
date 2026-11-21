@@ -150,6 +150,12 @@ Plan: [../plans/STARTUP.md](../plans/STARTUP.md). Tick a step only once it's don
 - [ ] AR / EN / FR strings — written, needs device test
 - [ ] Typecheck and lint pass (done); tested on a device
 
+### Weekly Akhira points (plan §4.15)
+- [ ] Weekly points on Home (Saturday 00:00 reset, unpaid Thanb carried, real points shown under) — written, needs device test
+- [ ] Week history screen and the on/off setting — written, needs device test
+- [ ] AR / EN / FR strings — written, needs device test
+- [ ] Typecheck and lint pass (done); tested on a device
+
 ## Phase 4: Wallet
 - [ ] Accounts screen (create, archive, hide; any currency or gold) — written, needs device test
 - [ ] Income, expenses and transfers (with exchange rates between currencies) — written, needs device test

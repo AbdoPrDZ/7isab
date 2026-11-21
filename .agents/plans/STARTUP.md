@@ -183,6 +183,12 @@ CCP (DZD), EUR bank (EUR), Debts / loans given (DZD), Gold (grams), …
 - **Plain tasks:** "Counts in hisab" off = no reward, no penalty, never an entry, never in the rating; shown on Today / calendar, and as a separate "Plain tasks" list (done / due) in Statistics and reports.
 - **Task alarm:** optional alarm on a task (clock time or relative to a prayer, sound, ring again), on the days the task is due, skipped on days it is already done (rescheduled when progress changes); removed with the task; listed with the alarms under the task's name.
 
+### 4.15 Weekly Akhira points (added)
+- **Option** (Settings → Hisab → Weekly points, off by default): the shown Akhira points start again every **Saturday 00:00**.
+- **Unpaid Thanb carries over:** the week starts at minus the Thanb not yet paid with sadaqa (e.g. 2700 earned + 200 unpaid Thanb = 2500; next week starts at −200). It never disappears without being paid; paying it brings the weekly points back up.
+- **Real points vs weekly points:** the real (never reset) Akhira balance is shown under the weekly one; the statistics always use the real entries. Nothing in the ledger is reset: the weekly figure is derived from the entries.
+- **History:** every past week with points carried in, earned, lost, Thanb added / paid, Thanb carried out, weekly and real points.
+
 ### 4.11 Prayer quality: khushoo and Jumu'ah (added)
 - **Khushoo level** when marking a prayer as prayed: **حاضر (good)**, **متوسط (normal)**, **ضعيف (weak)**. Stored on the prayer mark (encrypted like every record); can be changed later as a correction.
   - **Weak** adds a Thanb: "Weak khushoo" sin type (`sin:weakKhushoo`, penalty default 1), Akhira −penalty / Thanb-Sada9a +penalty. Good and normal add nothing.

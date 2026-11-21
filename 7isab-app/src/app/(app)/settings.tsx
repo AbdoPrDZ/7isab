@@ -4,6 +4,8 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Switch, View } from 'react-native';
 
+import { ProfileAvatar } from '@/components/profile-avatar';
+import { UpdateRow } from '@/components/update-row';
 import { AppText } from '@/components/ui/app-text';
 import { Button } from '@/components/ui/button';
 import { LockIcon } from '@/components/ui/icons';
@@ -100,11 +102,7 @@ export default function SettingsScreen() {
       <Section title={t('settings.account')}>
         <Card>
           <View style={styles.accountRow}>
-            <View style={[styles.avatar, { backgroundColor: theme.primarySoft, borderColor: theme.accent }]}>
-              <AppText variant="heading" color="primary" align="center">
-                {(user?.name || user?.email || '?').charAt(0).toUpperCase()}
-              </AppText>
-            </View>
+            <ProfileAvatar size={56} editable />
             <View style={styles.flex}>
               {user?.name ? <AppText variant="heading">{user.name}</AppText> : null}
               <AppText variant="label" color="textSecondary">
@@ -154,6 +152,8 @@ export default function SettingsScreen() {
           <Row title={t('bedtime.settings')} chevron onPress={() => router.push('/bedtime')} />
           <Divider />
           <Row title={t('report.settings')} chevron onPress={() => router.push('/report-settings')} />
+          <Divider />
+          <Row title={t('testaments.settings')} chevron onPress={() => router.push('/testament-settings')} />
         </Card>
       </Section>
 
@@ -165,6 +165,8 @@ export default function SettingsScreen() {
           </AppText>
           <Divider />
           <Row title={t('settingsExtra.rates')} chevron onPress={() => router.push('/rates')} />
+          <Divider />
+          <Row title={t('weekly.title')} subtitle={t('weekly.settingsHint')} chevron onPress={() => router.push('/akhira-weeks')} />
           <Divider />
           <Row title={t('settingsExtra.sinTypes')} chevron onPress={() => router.push({ pathname: '/sins', params: { mode: 'edit' } })} />
           <Divider />
@@ -191,6 +193,8 @@ export default function SettingsScreen() {
           <AppText variant="caption" color="textSecondary">
             {t('settings.version', { version: Constants.expoConfig?.version ?? '1.0.0' })}
           </AppText>
+          <Divider />
+          <UpdateRow />
         </Card>
       </Section>
 
@@ -204,14 +208,6 @@ const styles = StyleSheet.create({
   gap: { gap: Spacing.three },
   switchRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.three },
   accountRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.three },
-  avatar: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    borderWidth: 1.5,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
   note: {
     flexDirection: 'row',
     alignItems: 'flex-start',

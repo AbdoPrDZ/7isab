@@ -51,7 +51,8 @@ function remember(version: string, data: QuranPage): QuranPage {
   return data;
 }
 
-async function loadPage(version: string, page: number): Promise<QuranPage> {
+/** A page from memory, the phone's copy, or the server (saved on the phone). */
+export async function loadPage(version: string, page: number): Promise<QuranPage> {
   const inMemory = pageMemory.get(`${version}:${page}`);
   if (inMemory) return inMemory;
 

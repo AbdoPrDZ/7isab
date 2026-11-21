@@ -6,6 +6,7 @@
 - `types.ts`: record types, `Account`, `Entry` (kind, date `YYYY-MM-DD`, lines `{account, amount}`), `Task`, `TaskProgress`, `Settings` (main currency, rates, `closedThrough`, fast-tap strictness), `SinType`, `ExchangeRate`.
 - `ledger.ts`: `ensureDefaults`, balances (sum of lines), actions (`logSin`, `payThanb`, `giveSadaqa`, `payZakat`, `transfer`, `addIncomeOrExpense`, `logFastTap`).
 - `tasks.ts`: `isDue`, progress per task per day, `closeFinishedDays` (end-of-day check), `addLinkedProgress` (Quran / athkar).
+- `weekly.ts`: weekly Akhira points (`akhiraWeeks`, `useAkhiraWeeks`, `useWeeklyAkhira`, `useWeeklyAkhiraEnabled`); screen `app/(app)/akhira-weeks.tsx`.
 
 ## Purpose
 - One ledger for both dunya and akhira.
@@ -66,6 +67,7 @@ Created automatically. They can't be deleted.
 - **Defaults:** every reward, penalty and rate defaults to **1** and the user configures it. Never hard-code other values.
 - **Fixed IDs for automatic entries:** see `../decisions.md` #5.
 - **End-of-day check:** turns each task's progress into entries the day after (today stays open). Missed past days are caught up on the next app open, from `settings.closedThrough`. Prayer tasks are excluded: they are counted at each prayer's safe time (`prayer.md`).
+- **Weekly points** (`settings.weeklyAkhira`, off by default): Home shows the Akhira points of the week (Saturday 00:00, `periodRange`) instead of the real balance, with the real balance under it. Derived only, nothing is written or reset, so the real balance and the statistics are unchanged. Week points = −(Thanb-Sada9a balance at the week start, floored at 0) + the Akhira lines dated in the week. A Thanb is never cleared by the reset: it carries week to week until paid, and paying it adds its reward to Akhira (cancels the carried minus exactly while the Thanb reward rate is 1). The week history lists every week from the first entry (carried in, earned, lost, Thanb added / paid, carried out, weekly and real points).
 - **Plain tasks** (`task.plain`, "Counts in hisab" off): reward and penalty 0, `entryForDay` returns nothing, never in a rating (reports, programs and statistics list them apart).
 - **Task kinds:** quran, athkar, custom, prayer (automatic), bedtime (automatic, `bedtime.md`; skipped by the day-end check), nafilah (rawatib, duha, witr, qiyam, tahajjud; counted in rak'ahs; time window from the prayer times), fasting (presets in `lib/ledger/presets.ts`).
 - **Repeats:** daily; chosen weekdays; weekly / monthly / yearly (weeks start on Saturday; the target covers the whole period, which is counted the day after it ends); `hijri` (matching Hijri months and days, e.g. Ramadan = month 9, the White Days = days 13–15); `hijriMonth` (target over a whole Hijri month, e.g. six days of Shawwal). Period progress is stored on the period's first day.
