@@ -1,25 +1,39 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
-use App\Modules\Community\Http\Controllers\JoinController;
-use App\Modules\Community\Http\Controllers\SpaceController;
-use App\Modules\Community\Http\Controllers\PostController;
-use App\Modules\Community\Http\Controllers\CommentController;
-use App\Modules\Community\Http\Controllers\ShaiekhController;
-use App\Modules\Community\Http\Controllers\ChatController;
-use App\Modules\Community\Http\Controllers\ReportController;
+use App\Enums\Role;
+use App\Modules\Community\Http\Controllers\Admin\MemberController;
+use App\Modules\Community\Http\Controllers\Admin\RuleController;
 use App\Modules\Community\Http\Controllers\AdminController;
+use App\Modules\Community\Http\Controllers\ChatController;
+use App\Modules\Community\Http\Controllers\CommentController;
+use App\Modules\Community\Http\Controllers\JoinController;
+use App\Modules\Community\Http\Controllers\PostController;
+use App\Modules\Community\Http\Controllers\ReportController;
+use App\Modules\Community\Http\Controllers\ShaiekhController;
+use App\Modules\Community\Http\Controllers\SpaceController;
+use Illuminate\Support\Facades\Route;
+
+// Joining: open to every signed-in user (members or not).
+Route::prefix('community')
+    ->middleware(['auth:sanctum', 'active'])
+    ->group(function () {
+        Route::get('/rules', [JoinController::class, 'rules']);
+        Route::get('/me', [JoinController::class, 'status']);
+        Route::post('/join', [JoinController::class, 'join']);
+    });
+
+// Members who may still have new or changed rules to accept.
+Route::prefix('community')
+    ->middleware(['auth:sanctum', 'active', 'is_community_member:pending_rules'])
+    ->group(function () {
+        Route::post('/rules/accept', [JoinController::class, 'acceptRules']);
+        Route::put('/me', [JoinController::class, 'updateProfile']);
+        Route::post('/leave', [JoinController::class, 'leave']);
+    });
 
 Route::prefix('community')
     ->middleware(['auth:sanctum', 'active', 'is_community_member'])
     ->group(function () {
-
-        // Joining
-        Route::get('/rules', [JoinController::class, 'rules']);
-        Route::post('/join', [JoinController::class, 'join']);
-        Route::post('/leave', [JoinController::class, 'leave']);
-        Route::get('/me', [JoinController::class, 'profile']);
-        Route::put('/me', [JoinController::class, 'updateProfile']);
 
         // Spaces
         Route::get('/spaces', [SpaceController::class, 'discover']);
@@ -77,7 +91,7 @@ Route::prefix('community')
 // These routes are auto-discovered by the admin module
 // Routes: /api/v1/admin/community/*
 Route::prefix('admin/community')
-    ->middleware(['auth:sanctum', 'active', 'abilities:admin'])
+    ->middleware(['auth:sanctum', 'abilities:admin', 'active', 'role:'.implode(',', Role::values())])
     ->group(function () {
         Route::get('/space-requests', [AdminController::class, 'spaceRequests']);
         Route::post('/space-requests/{id}/approve', [AdminController::class, 'approveSpaceRequest']);
@@ -94,13 +108,16 @@ Route::prefix('admin/community')
         Route::post('/reports/{id}/suspend', [AdminController::class, 'suspendUser']);
         Route::post('/reports/{id}/ban', [AdminController::class, 'banUser']);
 
-        Route::get('/members', [AdminController::class, 'members']);
-        Route::post('/members/{id}/suspend', [AdminController::class, 'suspendMember']);
-        Route::post('/members/{id}/ban', [AdminController::class, 'banMember']);
-        Route::put('/members/{id}/gender', [AdminController::class, 'changeGender']);
+        Route::get('/members', [MemberController::class, 'index']);
+        Route::post('/members/{member}/suspend', [MemberController::class, 'suspend'])->whereNumber('member');
+        Route::post('/members/{member}/ban', [MemberController::class, 'ban'])->whereNumber('member');
+        Route::post('/members/{member}/reactivate', [MemberController::class, 'reactivate'])->whereNumber('member');
+        Route::put('/members/{member}/gender', [MemberController::class, 'changeGender'])->whereNumber('member');
 
-        Route::get('/rules', [AdminController::class, 'rules']);
-        Route::put('/rules/{key}', [AdminController::class, 'updateRule']);
+        Route::get('/rules', [RuleController::class, 'index']);
+        Route::post('/rules', [RuleController::class, 'store']);
+        Route::put('/rules/{rule}', [RuleController::class, 'update'])->whereNumber('rule');
+        Route::delete('/rules/{rule}', [RuleController::class, 'destroy'])->whereNumber('rule');
 
         Route::get('/spaces', [AdminController::class, 'spaces']);
         Route::post('/spaces/{id}/close', [AdminController::class, 'closeSpace']);

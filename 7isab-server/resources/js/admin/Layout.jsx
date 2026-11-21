@@ -66,6 +66,8 @@ export default function Layout() {
     const links = [
         { to: '/admin', label: t('dashboard'), end: true },
         { to: '/admin/users', label: t('users') },
+        { to: '/admin/community/members', label: t('community.members') },
+        { to: '/admin/community/rules', label: t('community.rules') },
         ...(isSuperAdmin ? [{ to: '/admin/admins', label: t('admins') }] : []),
     ];
 

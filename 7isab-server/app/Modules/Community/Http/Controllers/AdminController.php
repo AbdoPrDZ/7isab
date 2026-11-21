@@ -123,36 +123,6 @@ class AdminController extends Controller
         return response()->json([]);
     }
 
-    public function members(): JsonResponse
-    {
-        return response()->json([]);
-    }
-
-    public function suspendMember(): JsonResponse
-    {
-        return response()->json([]);
-    }
-
-    public function banMember(): JsonResponse
-    {
-        return response()->json([]);
-    }
-
-    public function changeGender(): JsonResponse
-    {
-        return response()->json([]);
-    }
-
-    public function rules(): JsonResponse
-    {
-        return response()->json([]);
-    }
-
-    public function updateRule(): JsonResponse
-    {
-        return response()->json([]);
-    }
-
     public function spaces(): JsonResponse
     {
         return response()->json([]);

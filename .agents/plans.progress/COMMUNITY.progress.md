@@ -10,10 +10,11 @@ Plan: [../plans/COMMUNITY.md](../plans/COMMUNITY.md). Design: [../blueprints/COM
 - [ ] App: community API client and the `pusher-js` connection (new runtime)
 
 ## Phase 1: joining and profiles
-- [ ] Versioned, admin-editable rules; acceptance per rule
-- [ ] Join flow in the app: intro, each rule on its own screen, names and gender; leave
-- [ ] Community shell: tabs, drawer, back-to-7isab button
-- [ ] Admin: rules editor, members list (suspend, ban, change gender)
+- [x] Versioned, admin-editable rules; acceptance per rule (server: `RuleBook`, join must cover every current rule, changed rules block members until accepted, rejoin keeps gender, banned / suspended can't rejoin; six starting rules seeded in AR / EN / FR; tests)
+- [ ] Join flow in the app: intro, each rule on its own screen, names and gender; leave — written (gate in `community/_layout.tsx`, `join-flow.tsx`, `settings.tsx`), needs device test
+- [ ] Community shell: tabs, drawer, back-to-7isab button — written (`community/(tabs)`, side-sheet menu instead of a drawer package, Home button in the header), needs device test
+- [x] Admin API: rules (list, add, edit with "changed in substance" version bump, delete), members (list with exact gender / status filters, suspend, ban, reactivate, change gender); community admin routes now require an admin role; tests
+- [ ] Admin panel pages: Community rules, Community members — written, `npm run build` passes, needs a browser test
 
 ## Phase 2: groups and pages
 - [ ] Creation requests and admin review
@@ -35,7 +36,9 @@ Plan: [../plans/COMMUNITY.md](../plans/COMMUNITY.md). Design: [../blueprints/COM
 - [x] App: Fixed import/export errors in PostCard, TestamentImportFlow, ProgramImportFlow
 - [x] App: Created community feed screen with post loading and display
 - [x] App: Added import buttons and TestamentImportFlow/ProgramImportFlow modals
-- [x] App: Wired Community button on home tab for navigation to /community/feed
+- [x] App: Wired Community button on home tab (now opens `/community`, the membership gate)
+- [x] Fixes: join routes reachable by non-members; CommunityRule / RuleAcceptance models; `Post::visibleTo` scope (space gender, audience by author gender) used by feed, space posts and import; payload validation returns 422; import only records the count (no copied post); feed limited to joined spaces and author names only; tests 77/77, pint clean
+- [x] App fixes: every API call sends the token; feed reads `{ posts, has_more }`; import sheet (one modal, app sheet style) with local start day and `endFromLength`; imports in `lib/community/imports.ts` and recorded on the server; all strings in AR / EN / FR; theme colors (light and dark); `useReverbChannel` hook rewritten; typecheck and lint clean
 - [ ] App: Device test — post testament/program, import, verify in vault
 - [ ] (Deferred to 4b) Event posts and event reminders
 

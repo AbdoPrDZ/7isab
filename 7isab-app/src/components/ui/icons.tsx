@@ -276,3 +276,52 @@ export function PencilIcon(props: IconProps) {
     </Icon>
   );
 }
+
+/** Two people (community groups). */
+export function PeopleIcon(props: IconProps) {
+  return (
+    <Icon {...props}>
+      <Circle cx="9" cy="8" r="3.5" />
+      <Path d="M2.5 20a6.5 6.5 0 0 1 13 0" />
+      <Path d="M16 4.6a3.5 3.5 0 0 1 0 6.8M18 14.2a6.5 6.5 0 0 1 3.5 5.8" />
+    </Icon>
+  );
+}
+
+/** A page with a folded corner (community pages). */
+export function PageIcon(props: IconProps) {
+  return (
+    <Icon {...props}>
+      <Path d="M6 3h8l4 4v14H6z" />
+      <Path d="M14 3v4h4M9 12h6M9 16h6" />
+    </Icon>
+  );
+}
+
+/** A question in a circle (fatwa). */
+export function QuestionIcon(props: IconProps) {
+  return (
+    <Icon {...props}>
+      <Circle cx="12" cy="12" r="9" />
+      <Path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .9-1 1.6V14M12 17.5h.01" />
+    </Icon>
+  );
+}
+
+/** Speech bubble (chats). */
+export function ChatIcon(props: IconProps) {
+  return (
+    <Icon {...props}>
+      <Path d="M4 5h16v11H9l-5 4z" />
+    </Icon>
+  );
+}
+
+/** Three lines (menu). */
+export function MenuIcon(props: IconProps) {
+  return (
+    <Icon {...props}>
+      <Path d="M4 7h16M4 12h16M4 17h16" />
+    </Icon>
+  );
+}

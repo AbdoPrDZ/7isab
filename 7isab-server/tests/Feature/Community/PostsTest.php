@@ -135,7 +135,7 @@ class PostsTest extends TestCase
             'payload' => $payload,
         ]);
 
-        $response->assertStatus(500);
+        $response->assertUnprocessable();
     }
 
     public function test_cannot_create_program_without_tasks(): void
@@ -154,7 +154,7 @@ class PostsTest extends TestCase
             'payload' => $payload,
         ]);
 
-        $response->assertStatus(500);
+        $response->assertUnprocessable();
     }
 
     public function test_import_testament_records_import(): void
@@ -178,8 +178,8 @@ class PostsTest extends TestCase
 
         $response = $this->actingAs($this->user)->postJson("/api/v1/community/posts/{$post->id}/import");
 
-        $response->assertCreated();
-        $response->assertJson(['message' => 'Post imported']);
+        $response->assertOk();
+        $response->assertJson(['message' => 'Post imported', 'imports_count' => 1]);
 
         $this->assertDatabaseHas('imports', [
             'profile_id' => $this->profile->id,
@@ -215,12 +215,127 @@ class PostsTest extends TestCase
 
         $response = $this->actingAs($this->user)->postJson("/api/v1/community/posts/{$post->id}/import");
 
-        $response->assertCreated();
-        $response->assertJson(['message' => 'Post imported']);
+        $response->assertOk();
+        $response->assertJson(['message' => 'Post imported', 'imports_count' => 1]);
 
         $this->assertDatabaseHas('imports', [
             'profile_id' => $this->profile->id,
             'post_id' => $post->id,
         ]);
+    }
+
+    public function test_importing_twice_counts_once_and_never_copies_the_post(): void
+    {
+        $post = $this->makeTestamentPost();
+
+        $this->actingAs($this->user)->postJson("/api/v1/community/posts/{$post->id}/import")->assertOk();
+        $this->actingAs($this->user)->postJson("/api/v1/community/posts/{$post->id}/import")
+            ->assertOk()
+            ->assertJson(['imports_count' => 1]);
+
+        $this->assertSame(1, Post::count());
+    }
+
+    public function test_cannot_import_a_text_post(): void
+    {
+        $post = $this->makeTestamentPost(['type' => 'text', 'payload' => null]);
+
+        $this->actingAs($this->user)->postJson("/api/v1/community/posts/{$post->id}/import")->assertNotFound();
+        $this->assertDatabaseCount('imports', 0);
+    }
+
+    public function test_cannot_import_a_post_from_a_space_of_the_other_gender(): void
+    {
+        $women = $this->otherGenderSpace();
+        $post = $this->makeTestamentPost(['space_id' => $women->id, 'author_id' => $women->owner_id]);
+
+        $this->actingAs($this->user)->postJson("/api/v1/community/posts/{$post->id}/import")->assertNotFound();
+    }
+
+    public function test_feed_lists_joined_spaces_and_hides_other_gender_only_posts(): void
+    {
+        $visible = $this->makeTestamentPost(['body' => 'For everyone']);
+
+        $sister = $this->femaleProfile();
+        SpaceMember::create(['space_id' => $this->space->id, 'profile_id' => $sister->id, 'role' => 'member', 'status' => 'active']);
+        $this->makeTestamentPost(['body' => 'Sisters only', 'author_id' => $sister->id, 'audience' => 'own_gender']);
+
+        $notJoined = Space::create([...$this->spaceFields(), 'slug' => 'not-joined', 'owner_id' => $this->profile->id]);
+        $this->makeTestamentPost(['body' => 'Not joined', 'space_id' => $notJoined->id]);
+
+        $response = $this->actingAs($this->user)->getJson('/api/v1/community/feed');
+
+        $response->assertOk();
+        $this->assertSame([$visible->id], array_column($response->json('posts'), 'id'));
+        $this->assertSame(['id', 'first_name', 'last_name', 'gender'], array_keys($response->json('posts.0.author')));
+    }
+
+    public function test_invalid_program_task_is_rejected_with_a_field_error(): void
+    {
+        $this->actingAs($this->user)->postJson("/api/v1/community/spaces/{$this->space->id}/posts", [
+            'type' => 'program',
+            'body' => 'Sharing a program',
+            'payload' => [
+                'name' => 'Program',
+                'category' => 'improving',
+                'goal' => 'Goal',
+                'length' => 30,
+                'tasks' => [['name' => 'No type']],
+            ],
+        ])->assertUnprocessable()->assertJsonStructure(['errors' => ['payload.tasks.0.type']]);
+
+        $this->assertSame(0, Post::count());
+    }
+
+    /** @param  array<string, mixed>  $overrides */
+    private function makeTestamentPost(array $overrides = []): Post
+    {
+        return Post::create([
+            'space_id' => $this->space->id,
+            'author_id' => $this->profile->id,
+            'type' => 'testament',
+            'body' => 'Test',
+            'payload' => ['category' => 'akhira', 'text' => 'Text'],
+            'audience' => 'everyone',
+            'status' => 'published',
+            ...$overrides,
+        ]);
+    }
+
+    private function femaleProfile(): CommunityProfile
+    {
+        return CommunityProfile::create([
+            'user_id' => User::factory()->create()->id,
+            'first_name' => 'Sister',
+            'last_name' => 'User',
+            'gender' => 'female',
+            'status' => 'active',
+            'joined_at' => now(),
+        ]);
+    }
+
+    private function otherGenderSpace(): Space
+    {
+        return Space::create([
+            ...$this->spaceFields(),
+            'slug' => 'sisters',
+            'owner_id' => $this->femaleProfile()->id,
+            'gender' => 'female',
+        ]);
+    }
+
+    /** @return array<string, mixed> */
+    private function spaceFields(): array
+    {
+        return [
+            'type' => 'group',
+            'name' => 'Group',
+            'purpose' => 'Testing',
+            'goals' => 'Goals',
+            'content_plan' => 'Plan',
+            'gender' => 'male',
+            'join_policy' => 'open',
+            'status' => 'active',
+        ];
     }
 }

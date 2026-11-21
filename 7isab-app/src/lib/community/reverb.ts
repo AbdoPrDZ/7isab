@@ -1,22 +1,15 @@
 import Pusher from 'pusher-js';
 import { useEffect, useRef } from 'react';
 
+/**
+ * Live community events over Laravel Reverb (Pusher protocol).
+ * One connection per signed-in session; screens subscribe with useReverbChannel.
+ */
+
 let reverb: Pusher | null = null;
 
-export function initializeReverb(config: {
-  appKey: string;
-  host: string;
-  port: number;
-  useTLS: boolean;
-  token: string;
-}) {
-  if (reverb) {
-    return reverb;
-  }
-
-  if (__DEV__) {
-    // Pusher.logToConsole = true; // Uncomment for debugging
-  }
+export function initializeReverb(config: { appKey: string; host: string; port: number; useTLS: boolean; token: string }): Pusher {
+  if (reverb) return reverb;
 
   const scheme = config.useTLS ? 'wss' : 'ws';
   const protocol = config.useTLS ? 'https' : 'http';
@@ -24,17 +17,13 @@ export function initializeReverb(config: {
   reverb = new Pusher(config.appKey, {
     wsHost: config.host,
     wsPort: config.port,
-    httpHost: config.host,
-    httpPort: config.port,
-    scheme,
+    wssPort: config.port,
+    forceTLS: config.useTLS,
     enabledTransports: [scheme],
+    cluster: '',
     authEndpoint: `${protocol}://${config.host}:${config.port}/broadcasting/auth`,
-    auth: {
-      headers: {
-        Authorization: `Bearer ${config.token}`,
-      },
-    },
-  } as any);
+    auth: { headers: { Authorization: `Bearer ${config.token}` } },
+  });
 
   return reverb;
 }
@@ -43,89 +32,46 @@ export function getReverb(): Pusher | null {
   return reverb;
 }
 
-export function disconnectReverb() {
-  if (reverb) {
-    reverb.disconnect();
-    reverb = null;
-  }
+export function disconnectReverb(): void {
+  reverb?.disconnect();
+  reverb = null;
 }
 
-export function useReverbChannel(channelName: string, callbacks: { onMessage?: (data: any) => void; onError?: (error: Error) => void } = {}) {
-  const channelRef = useRef<any | null>(null);
-  const reverbInstance = getReverb();
+export type ChannelHandlers = Record<string, (data: unknown) => void>;
+
+/** Channel names, matching routes/channels.php on the server. */
+export const Channels = {
+  user: (userId: number) => `private-users.${userId}`,
+  space: (spaceId: number, gender: 'male' | 'female') => `private-spaces.${spaceId}.${gender}`,
+  post: (postId: number, gender: 'male' | 'female') => `private-posts.${postId}.${gender}`,
+  conversation: (conversationId: number) => `private-conversations.${conversationId}`,
+};
+
+/**
+ * Subscribes to a channel while the component is mounted and calls the handler
+ * for each event name. Pass null to stay unsubscribed (e.g. before joining).
+ * Handlers may change between renders without re-subscribing.
+ */
+export function useReverbChannel(channelName: string | null, handlers: ChannelHandlers): void {
+  const handlersRef = useRef(handlers);
 
   useEffect(() => {
-    if (!reverbInstance) {
-      callbacks.onError?.(new Error('Reverb not initialized'));
-      return;
-    }
+    handlersRef.current = handlers;
+  });
 
-    const channel = reverbInstance.subscribe(channelName);
+  useEffect(() => {
+    const connection = getReverb();
+    if (!channelName || !connection) return;
 
-    channel.bind('pusher:subscription_succeeded', () => {
-      console.log(`Subscribed to ${channelName}`);
-    });
-
-    channel.bind('pusher:subscription_error', (error: any) => {
-      console.error(`Failed to subscribe to ${channelName}:`, error);
-      callbacks.onError?.(error);
-    });
-
-    channelRef.current = channel;
+    const channel = connection.subscribe(channelName);
+    const listener = (eventName: string, data: unknown) => {
+      handlersRef.current[eventName]?.(data);
+    };
+    channel.bind_global(listener);
 
     return () => {
-      if (channelRef.current && reverbInstance) {
-        reverbInstance.unsubscribe(channelName);
-        channelRef.current = null;
-      }
+      channel.unbind_global(listener);
+      connection.unsubscribe(channelName);
     };
-  }, [channelName, callbacks, reverbInstance]);
-
-  return {
-    channel: channelRef.current,
-    bind: (eventName: string, callback: (data: any) => void) => {
-      if (channelRef.current) {
-        channelRef.current.bind(eventName, callback);
-      }
-    },
-    unbind: (eventName: string, callback?: (data: any) => void) => {
-      if (channelRef.current) {
-        if (callback) {
-          channelRef.current.unbind(eventName, callback);
-        } else {
-          channelRef.current.unbind(eventName);
-        }
-      }
-    },
-  };
-}
-
-export function subscribeToUserChannel(userId: number, callbacks: { onNotification?: (data: any) => void } = {}) {
-  return useReverbChannel(`private-users.${userId}`, {
-    onMessage: callbacks.onNotification,
-  });
-}
-
-export function subscribeToSpaceChannel(spaceId: number, gender: 'male' | 'female', callbacks: { onPost?: (data: any) => void } = {}) {
-  return useReverbChannel(`private-spaces.${spaceId}.${gender}`, {
-    onMessage: callbacks.onPost,
-  });
-}
-
-export function subscribeToPostChannel(postId: number, gender: 'male' | 'female', callbacks: { onComment?: (data: any) => void } = {}) {
-  return useReverbChannel(`private-posts.${postId}.${gender}`, {
-    onMessage: callbacks.onComment,
-  });
-}
-
-export function subscribeToConversationChannel(conversationId: number, callbacks: { onMessage?: (data: any) => void; onTyping?: (data: any) => void } = {}) {
-  const channel = useReverbChannel(`private-conversations.${conversationId}`, {
-    onMessage: callbacks.onMessage,
-  });
-
-  return {
-    ...channel,
-    onMessage: callbacks.onMessage,
-    onTyping: callbacks.onTyping,
-  };
+  }, [channelName]);
 }

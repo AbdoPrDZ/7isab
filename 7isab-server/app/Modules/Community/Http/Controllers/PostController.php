@@ -10,62 +10,60 @@ use App\Modules\Community\Models\Space;
 use App\Modules\Community\Models\TestamentTemplate;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class PostController extends Controller
 {
+    /** Only the author's public fields ever leave the server. */
+    private const AUTHOR_FIELDS = 'author:id,first_name,last_name,gender';
+
     public function feed(Request $request): JsonResponse
     {
-        $user = $request->user();
-        $profile = $user->communityProfile;
+        $profile = $request->user()->communityProfile;
 
-        $posts = Post::whereHas('space', function ($q) use ($profile) {
-            $q->where('status', 'active')
-                ->where(function ($q2) use ($profile) {
-                    $q2->whereNull('gender')
-                        ->orWhere('gender', $profile->gender);
-                });
-        })
-            ->where('status', 'published')
-            ->where(function ($q) use ($profile) {
-                $q->where('audience', 'everyone')
-                    ->orWhere(function ($q2) use ($profile) {
-                        $q2->where('audience', 'own_gender')
-                            ->where('author_id', $profile->id);
-                    });
-            })
-            ->with('space', 'author')
+        $page = Post::visibleTo($profile)
+            ->whereHas('space.members', fn ($member) => $member
+                ->where('profile_id', $profile->id)
+                ->where('status', 'active'))
+            ->with(self::AUTHOR_FIELDS)
+            ->withCount('imports')
             ->latest()
-            ->paginate(20);
+            ->simplePaginate(20);
 
-        return response()->json(['posts' => $posts]);
+        return Controller::apiSuccessResponse('Feed', [
+            'posts' => $page->items(),
+            'has_more' => $page->hasMorePages(),
+        ]);
     }
 
     public function spacePosts(Request $request, int $id): JsonResponse
     {
         $space = Space::findOrFail($id);
-        $user = $request->user();
-        $profile = $user->communityProfile;
+        $profile = $request->user()->communityProfile;
 
         if ($space->gender && $space->gender !== $profile->gender) {
             return Controller::apiErrorResponse('No access to this space', code: 403);
         }
 
-        $posts = Post::where('space_id', $id)
-            ->where('status', 'published')
-            ->with('author', 'comments.author')
+        $page = Post::visibleTo($profile)
+            ->where('space_id', $id)
+            ->with(self::AUTHOR_FIELDS)
+            ->withCount('imports')
             ->latest()
-            ->paginate(20);
+            ->simplePaginate(20);
 
-        return response()->json(['posts' => $posts]);
+        return Controller::apiSuccessResponse('Posts', [
+            'posts' => $page->items(),
+            'has_more' => $page->hasMorePages(),
+        ]);
     }
 
     public function store(Request $request, int $id): JsonResponse
     {
         $space = Space::findOrFail($id);
-        $user = $request->user();
-        $profile = $user->communityProfile;
+        $profile = $request->user()->communityProfile;
 
-        if (! $space->members()->where('profile_id', $profile->id)->exists()) {
+        if (! $space->members()->where('profile_id', $profile->id)->where('status', 'active')->exists()) {
             return Controller::apiErrorResponse('Not a member of this space', code: 403);
         }
 
@@ -74,91 +72,78 @@ class PostController extends Controller
             'body' => 'required|string|max:5000',
             'payload' => 'sometimes|array',
             'audience' => 'sometimes|in:own_gender,everyone',
+            ...$this->payloadRules($request->input('type')),
         ]);
 
         $payload = $validated['payload'] ?? null;
 
-        if ($validated['type'] === 'testament') {
-            $this->validateTestamentPayload($payload);
-            $template = TestamentTemplate::create([
+        $post = DB::transaction(function () use ($validated, $payload, $profile, $space) {
+            if ($validated['type'] === 'testament') {
+                $template = TestamentTemplate::create([
+                    'author_id' => $profile->id,
+                    'category' => $payload['category'],
+                    'text' => $payload['text'],
+                    'source' => $payload['source'] ?? null,
+                ]);
+                $payload['template_id'] = $template->id;
+            } elseif ($validated['type'] === 'program') {
+                $template = ProgramTemplate::create([
+                    'author_id' => $profile->id,
+                    'name' => $payload['name'],
+                    'category' => $payload['category'],
+                    'custom_category' => $payload['custom_category'] ?? null,
+                    'goal' => $payload['goal'],
+                    'length' => $payload['length'],
+                    'tasks' => $payload['tasks'],
+                ]);
+                $payload['template_id'] = $template->id;
+            }
+
+            return Post::create([
+                'space_id' => $space->id,
                 'author_id' => $profile->id,
-                'category' => $payload['category'],
-                'text' => $payload['text'],
-                'source' => $payload['source'] ?? null,
+                'type' => $validated['type'],
+                'body' => $validated['body'],
+                'payload' => $payload,
+                'audience' => $validated['audience'] ?? 'everyone',
+                'status' => $space->posting_requires_approval ? 'pending' : 'published',
             ]);
-            $payload['template_id'] = $template->id;
-        } elseif ($validated['type'] === 'program') {
-            $this->validateProgramPayload($payload);
-            $template = ProgramTemplate::create([
-                'author_id' => $profile->id,
-                'name' => $payload['name'],
-                'category' => $payload['category'],
-                'custom_category' => $payload['custom_category'] ?? null,
-                'goal' => $payload['goal'],
-                'length' => $payload['length'],
-                'tasks' => $payload['tasks'],
-            ]);
-            $payload['template_id'] = $template->id;
-        }
+        });
 
-        $status = $space->posting_requires_approval ? 'pending' : 'published';
-
-        $post = Post::create([
-            'space_id' => $id,
-            'author_id' => $profile->id,
-            'type' => $validated['type'],
-            'body' => $validated['body'],
-            'payload' => $payload,
-            'audience' => $validated['audience'] ?? 'everyone',
-            'status' => $status,
-        ]);
-
-        return response()->json(['post' => [
+        return Controller::apiSuccessResponse('Post created', ['post' => [
             'id' => $post->id,
             'status' => $post->status,
         ]], 201);
     }
 
-    private function validateTestamentPayload(?array $payload): void
+    /**
+     * Payload rules per shared item type; the shapes match the app's vault records.
+     *
+     * @return array<string, string>
+     */
+    private function payloadRules(mixed $type): array
     {
-        if (! $payload) {
-            throw new \InvalidArgumentException('Testament payload is required');
-        }
-
-        if (empty($payload['category']) || empty($payload['text'])) {
-            throw new \InvalidArgumentException('Testament must have category and text');
-        }
-
-        $validCategories = ['jannah', 'nar', 'akhira', 'dunya', 'athkar'];
-        if (! in_array($payload['category'], $validCategories, true)) {
-            throw new \InvalidArgumentException('Invalid testament category');
-        }
-    }
-
-    private function validateProgramPayload(?array $payload): void
-    {
-        if (! $payload) {
-            throw new \InvalidArgumentException('Program payload is required');
-        }
-
-        if (empty($payload['name']) || empty($payload['category']) || empty($payload['goal']) || empty($payload['length']) || empty($payload['tasks'])) {
-            throw new \InvalidArgumentException('Program must have name, category, goal, length, and tasks');
-        }
-
-        if (! is_array($payload['tasks']) || count($payload['tasks']) === 0) {
-            throw new \InvalidArgumentException('Program must have at least one task');
-        }
-
-        $validCategories = ['improving', 'healing', 'custom'];
-        if (! in_array($payload['category'], $validCategories, true)) {
-            throw new \InvalidArgumentException('Invalid program category');
-        }
-
-        foreach ($payload['tasks'] as $task) {
-            if (empty($task['name']) || empty($task['type'])) {
-                throw new \InvalidArgumentException('Each task must have name and type');
-            }
-        }
+        return match ($type) {
+            'testament' => [
+                'payload' => 'required|array',
+                'payload.category' => 'required|in:jannah,nar,akhira,dunya,athkar',
+                'payload.text' => 'required|string|max:5000',
+                'payload.source' => 'nullable|string|max:500',
+            ],
+            'program' => [
+                'payload' => 'required|array',
+                'payload.name' => 'required|string|max:200',
+                'payload.category' => 'required|in:improving,healing,custom',
+                'payload.custom_category' => 'nullable|required_if:payload.category,custom|string|max:100',
+                'payload.goal' => 'required|string|max:2000',
+                'payload.length' => 'required|integer|min:1|max:3650',
+                'payload.tasks' => 'required|array|min:1|max:50',
+                'payload.tasks.*.name' => 'required|string|max:200',
+                'payload.tasks.*.type' => 'required|string|max:50',
+                'payload.tasks.*.reward' => 'nullable|integer|min:0',
+            ],
+            default => [],
+        };
     }
 
     public function update(Request $request, int $id): JsonResponse
@@ -206,37 +191,28 @@ class PostController extends Controller
         $user = $request->user();
         $profile = $user->communityProfile;
 
-        $post->savedBy()->attach($profile->id);
+        $post->savedBy()->syncWithoutDetaching([$profile->id]);
 
         return response()->json(['message' => 'Post saved']);
     }
 
+    /**
+     * Records that the viewer imported a shared item (only the count is ever shown).
+     * The app copies the payload into its encrypted vault itself.
+     */
     public function import(Request $request, int $id): JsonResponse
     {
-        $post = Post::findOrFail($id);
-        $user = $request->user();
-        $profile = $user->communityProfile;
+        $profile = $request->user()->communityProfile;
+        $post = Post::visibleTo($profile)->whereIn('type', ['testament', 'program'])->findOrFail($id);
 
-        $importedPost = Post::create([
-            'space_id' => $post->space_id,
-            'author_id' => $profile->id,
-            'type' => $post->type,
-            'body' => $post->body,
+        Import::firstOrCreate(
+            ['profile_id' => $profile->id, 'post_id' => $post->id],
+            ['imported_at' => now()],
+        );
+
+        return Controller::apiSuccessResponse('Post imported', [
             'payload' => $post->payload,
-            'audience' => 'own_gender',
-            'status' => 'published',
+            'imports_count' => $post->imports()->count(),
         ]);
-
-        Import::create([
-            'profile_id' => $profile->id,
-            'post_id' => $id,
-            'imported_at' => now(),
-        ]);
-
-        return response()->json([
-            'message' => 'Post imported',
-            'imported_post_id' => $importedPost->id,
-            'payload' => $importedPost->payload,
-        ], 201);
     }
 }

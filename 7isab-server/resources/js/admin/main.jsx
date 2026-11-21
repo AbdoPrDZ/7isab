@@ -6,6 +6,8 @@ import { AuthProvider, useAuth } from './auth';
 import { I18nProvider } from './i18n';
 import Layout from './Layout';
 import Admins from './pages/Admins';
+import CommunityMembers from './pages/CommunityMembers';
+import CommunityRules from './pages/CommunityRules';
 import Dashboard from './pages/Dashboard';
 import Login from './pages/Login';
 import UserDetail from './pages/UserDetail';
@@ -35,6 +37,8 @@ const router = createBrowserRouter([
                     { index: true, element: <Dashboard /> },
                     { path: 'users', element: <Users /> },
                     { path: 'users/:id', element: <UserDetail /> },
+                    { path: 'community/members', element: <CommunityMembers /> },
+                    { path: 'community/rules', element: <CommunityRules /> },
                     {
                         path: 'admins',
                         element: (

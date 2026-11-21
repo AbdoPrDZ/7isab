@@ -20,12 +20,12 @@ Broadcast::channel('private-users.{userId}', function ($user, $userId) {
 Broadcast::channel('private-spaces.{spaceId}.{gender}', function ($user, $spaceId, $gender) {
     // Check if user is a member or follower of the space and matches the gender
     // The server will verify this in the channel authorization, we just prevent obvious mismatches
-    if (!in_array($gender, ['male', 'female'])) {
+    if (! in_array($gender, ['male', 'female'])) {
         return false;
     }
 
     // User must be a community member
-    if (!$user->communityProfile) {
+    if (! $user->communityProfile) {
         return false;
     }
 
@@ -34,11 +34,11 @@ Broadcast::channel('private-spaces.{spaceId}.{gender}', function ($user, $spaceI
 
 // Post comments by gender
 Broadcast::channel('private-posts.{postId}.{gender}', function ($user, $postId, $gender) {
-    if (!in_array($gender, ['male', 'female'])) {
+    if (! in_array($gender, ['male', 'female'])) {
         return false;
     }
 
-    if (!$user->communityProfile) {
+    if (! $user->communityProfile) {
         return false;
     }
 
@@ -49,7 +49,7 @@ Broadcast::channel('private-posts.{postId}.{gender}', function ($user, $postId, 
 Broadcast::channel('private-conversations.{conversationId}', function ($user, $conversationId) {
     // Check if user is a member of the conversation
     // The server will verify the actual membership
-    if (!$user->communityProfile) {
+    if (! $user->communityProfile) {
         return false;
     }
 
@@ -58,11 +58,11 @@ Broadcast::channel('private-conversations.{conversationId}', function ($user, $c
 
 // Shaykhs receiving questions by gender
 Broadcast::channel('private-shaykhs.{gender}', function ($user, $gender) {
-    if (!in_array($gender, ['male', 'female'])) {
+    if (! in_array($gender, ['male', 'female'])) {
         return false;
     }
 
-    if (!$user->communityProfile) {
+    if (! $user->communityProfile) {
         return false;
     }
 

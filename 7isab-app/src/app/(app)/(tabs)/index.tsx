@@ -267,9 +267,9 @@ export default function TodayScreen() {
 
       <View style={styles.quick}>
         <Button
-          title="Community"
+          title={t('community.title')}
           variant="secondary"
-          onPress={() => router.push('/community/feed')}
+          onPress={() => router.push('/community')}
         />
       </View>
     </Screen>
