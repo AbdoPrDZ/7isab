@@ -30,12 +30,14 @@ It works offline, syncs between devices, and is **end-to-end encrypted**: the se
 - **Bedtime:** an automatic task; missing the bedtime asks for a reason, and the reason decides whether it's a Thanb.
 - **Sins** with configurable penalties, and paying Thanb back as sadaqa.
 - **Weekly points (optional):** Home shows the Akhira points of the week, reset every Saturday; unpaid Thanb carries over until it's paid. The real points are never reset.
+- **Testaments (توصيات):** reminders of Jannah and Nar, advice for the Akhira and the Dunya, and athkar, as notifications at random and / or fixed times for each kind. Built-in ayat are quoted exactly with their reference, and you can add your own.
 - **Reports:** day, week, month and year, with an estimated rating (good, in sha Allah / average / weak) and notes. **Programs** for improvement or recovery, with their own report, clean days and relapses.
 
 **Dunya**
 - Accounts in any currency or in gold grams, with manual exchange rates.
 - Income, expenses, transfers, recurring items, budgets, and savings goals with weekly, monthly or yearly plans.
 - Debts both ways: what people owe you and what you owe, each with its own total and per-person list.
+- **Investments, halal only:** own trade / production, mudaraba, musharaka and ijara. There's no interest and no guaranteed return, and halal checks are confirmed before saving. It tracks capital, profit, losses and withdrawals, and compares your expected profit per day / week / month / year with the real profit (return on capital, yearly return, payback).
 - Zakat calculator (nisab and hawl).
 - A Statistics tab for dunya and akhira: any date range, many filters, comparison with the previous period, saved filters and CSV export.
 
@@ -43,6 +45,8 @@ It works offline, syncs between devices, and is **end-to-end encrypted**: the se
 - A calendar with day, week, month and year views of tasks and prayers, and Ramadan highlighted.
 - User alarms, set at a time or relative to a prayer (e.g. 30 min before Fajr).
 - Reminders to mark a prayer, and a daily task reminder.
+- **Search** everywhere (Quran, athkar, Testaments, wallet activity, tasks, notes, accounts…). Diacritics and Uthmani spelling are handled, and Quran search works offline.
+- A profile photo, encrypted like everything else.
 - Arabic (right-to-left), English and French. Light and dark themes.
 - PIN or fingerprint app lock, a recovery key, and an optional fingerprint-protected data key.
 

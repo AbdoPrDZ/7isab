@@ -2,7 +2,7 @@
 
 Each release lists the app `version` (the OTA bundle) and its `runtimeVersion` (the native build it runs on). A new `runtimeVersion` needs a new APK; a new `version` alone can be sent as an OTA update.
 
-## Unreleased: 0.0.5 (runtime 1.2.0, needs a new APK)
+## 0.1.0 (runtime 1.2.0, needs a new APK), 2026-11-21
 
 ### Added
 - **Profile photo:** tap the photo in Settings to pick one from the gallery or take one, crop it square, or remove it. It's shrunk to 256×256 and encrypted on the phone like every record. It also shows next to the greeting on Home.
@@ -11,6 +11,13 @@ Each release lists the app `version` (the OTA bundle) and its `runtimeVersion` (
   - **Search boxes** in the Quran tab (ayat and surah names), the Athkar tab, wallet activity (all months: note, person, category, account, amount) and the Testaments screen.
   - Diacritics, hamza and alef forms don't matter; Quran search also matches Uthmani spelling (ٱلصَّلَوٰة ↔ الصلاة).
   - **Offline Quran search:** the first search downloads the rest of the Quran once (with progress). Searches run on the phone and never leave it.
+
+- **Investments** (Wallet → Investments), halal only: own trade / production, mudaraba, musharaka and ijara.
+  - No interest rate or guaranteed-return field. Each kind shows its halal rule, and five halal checks must be confirmed before the first save.
+  - Records: capital added, profit (into an account or reinvested), loss and capital taken back. Each is a normal ledger entry, so net worth, statistics and zakat include it.
+  - Figures: capital now, net profit, return on capital, yearly return on the average capital, capital recovered by profit, average profit per period, periods with profit, and a warning when no profit has been recorded for a while.
+  - Expected vs real: an optional estimate of your profit per day, week, month or year is compared with the real profit, as a total and as a chart per period.
+  - An asset rented out (ijara) is left out of zakat by default, since zakat is due on the rent.
 
 ### Changed
 - New native modules `expo-image-picker` and `expo-image-manipulator`, so `runtimeVersion` is now 1.2.0 (create version 1.2.0 in OTACenter and install the new APK).

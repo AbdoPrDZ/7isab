@@ -222,7 +222,7 @@ type EntryInput = {
   date?: string;
   note?: string;
   id?: string;
-} & Partial<Pick<Entry, 'taskId' | 'sinTypeId' | 'categoryId' | 'rate' | 'person'>>;
+} & Partial<Pick<Entry, 'taskId' | 'sinTypeId' | 'categoryId' | 'rate' | 'person' | 'investmentId'>>;
 
 export async function addEntry(input: EntryInput): Promise<Entry> {
   const lines = input.lines.filter((line) => line.amount !== 0).map((line) => ({ ...line, amount: round(line.amount) }));

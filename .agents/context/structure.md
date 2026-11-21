@@ -46,6 +46,9 @@ Current level: **standard**.
 - `bedtime.md`: the bedtime task, late reasons, notifications.
 - `reports.md`: day / week / month / year reports, rating, notes; programs and relapses.
 - `statistics.md`: the Statistics tab (filters, sections, export).
+- `testaments.md`: Testaments (scheduled reminders and advice, built-in ayat and athkar).
+- `search.md`: global / per-screen search and the offline Quran index.
+- `investments.md`: halal-only investments and their statistics.
 
 ## Relationship to the Plan
 

@@ -9,6 +9,7 @@ This file is the summary across both.
 
 ## 2026-11-21
 
+- **App 0.1.0 (runtime 1.2.0, new APK):** halal-only investments (trade, mudaraba, musharaka, ijara) with expected vs real statistics; global and per-screen search with offline, Uthmani-aware Quran search; a profile photo. New native image modules, so this release needs a new APK and version 1.2.0 in OTACenter.
 - **App 0.0.4 (runtime 1.1.0):** Testaments (توصيات): reminders of Jannah and Nar, advice for the Akhira and the Dunya, and athkar, as notifications on a schedule per category, with 87 built-in ones and your own. Fixed the "Log a sin" button label.
 
 ## 2026-11-20

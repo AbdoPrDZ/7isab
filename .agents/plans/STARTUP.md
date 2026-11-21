@@ -189,6 +189,22 @@ CCP (DZD), EUR bank (EUR), Debts / loans given (DZD), Gold (grams), …
 - **Real points vs weekly points:** the real (never reset) Akhira balance is shown under the weekly one; the statistics always use the real entries. Nothing in the ledger is reset: the weekly figure is derived from the entries.
 - **History:** every past week with points carried in, earned, lost, Thanb added / paid, Thanb carried out, weekly and real points.
 
+### 4.16 Testaments (added)
+- Reminders of Jannah and Nar, advice for the Akhira and the Dunya, and athkar, as notifications. Per category: on/off, N random times a day inside a window, fixed times.
+- Built-in: ayat (exact, with reference), short advice (translated, not attributed), athkar (Arabic). The user adds their own (text, optional source). Tapping a notification opens the Testament.
+
+### 4.17 Search (added)
+- Global search (Home) over the Quran, athkar, Testaments, wallet activity, tasks and programs, notes, accounts / categories / people, alarms and sin types; search boxes in the Quran, Athkar, Wallet activity and Testaments screens.
+- Arabic matching ignores diacritics, hamza and alef forms; Quran search matches Uthmani spelling and runs offline (the Quran is downloaded once).
+
+### 4.18 Profile photo (added)
+- Gallery or camera, square crop, 256 px, encrypted like every record; shown in Settings and on Home. Needs runtime 1.2.0 (native image modules).
+
+### 4.19 Investments (added)
+- **Halal only:** own trade / production, mudaraba, musharaka, ijara. No riba, no qimar, nothing doubtful; no interest or guaranteed-return field; five halal checks before saving; each kind shows its rule.
+- Records: capital added, profit (to an account or reinvested), loss, capital taken back, as ledger entries on the investment's capital account.
+- Optional expected profit per day / week / month / year (an estimate) compared with the real profit; ROI, yearly return, payback, average per period, overdue warning; overall totals.
+
 ### 4.11 Prayer quality: khushoo and Jumu'ah (added)
 - **Khushoo level** when marking a prayer as prayed: **حاضر (good)**, **متوسط (normal)**, **ضعيف (weak)**. Stored on the prayer mark (encrypted like every record); can be changed later as a correction.
   - **Weak** adds a Thanb: "Weak khushoo" sin type (`sin:weakKhushoo`, penalty default 1), Akhira −penalty / Thanb-Sada9a +penalty. Good and normal add nothing.

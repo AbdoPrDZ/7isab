@@ -49,5 +49,13 @@ Short records. Each one lists the decision, then why.
     - Why: expo-notifications can't show a full-screen page or loop a sound; the user wants alarm-clock behaviour with the app closed. Falls back to notifications where the module is missing.
 20. **Thumn is split by word count at the nearest ayah.**
     - Why: the Madani data has no thumn marks; this is predictable and documented as approximate.
-21. **Secrets come from environment variables** (`.env.local`, git-ignored), read by `app.config.js` (OTA server URL and key).
+21. **Secrets come from environment variables** (`.env` for local builds, `.env.deploy` only for deploy builds; both git-ignored), read by `app.config.js` (OTA server URL and key).
     - Why: never commit keys; the build leaves the OTA plugin out when they're missing.
+22. **Built-in ayat are copied from the quran.com API, never typed.**
+    - Why: Quran text must be exact; typed text differed in diacritic order. Excerpts are exact word runs of the source.
+23. **Quran search is offline, with Uthmani-aware folding.**
+    - Why: search words stay on the phone; the stored text is Uthmani, so plain typing needs folding (see `domains/search.md`).
+24. **Investments are halal-only, with no interest or guaranteed-return field, and are recorded as ledger entries on a per-investment capital account.**
+    - Why: the user never invests with riba, qimar or doubtful deals; entries keep net worth, statistics and zakat right without a second money system.
+25. **The profile photo is an ordinary encrypted record**, resized to 256 px.
+    - Why: it is user data (end-to-end encrypted like everything else) and small enough for one sync record.

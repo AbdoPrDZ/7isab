@@ -39,8 +39,8 @@ Builds go to `release/` (ignored by git), named `<slug>-<runtimeVersion>-<versio
 # Production (for upload): .env.deploy ONLY (.env is not read).
 # cp .env.deploy.example .env.deploy, then fill it in (it holds secrets; git ignores it).
 # Fails if .env.deploy is missing, a required value is empty, or a URL isn't https.
-npm run build:deploy:release   # OTA bundle → release/7isab-app-1.1.0-0.0.2.zip   (Version → Add bundle)
-npm run build:deploy:apk       # release APK → release/7isab-app-1.1.0-0.0.2.apk  (new native version)
+npm run build:deploy:release   # OTA bundle → release/7isab-app-1.2.0-0.1.0.zip   (Version → Add bundle)
+npm run build:deploy:apk       # release APK → release/7isab-app-1.2.0-0.1.0.apk  (new native version)
 npm run build:deploy:all       # both
 
 # Local test builds: .env only (e.g. your computer's server). Don't upload these.
@@ -85,8 +85,9 @@ npx expo lint
 
 ```text
 src/app/            screens (expo-router): (tabs) today / quran / athkar / wallet / stats, prayer, qibla, calendar,
-                    alarms, bedtime, report, programs, akhira-weeks, settings…
-src/components/     UI building blocks (ui/, prayer/, bedtime/, calendar/, stats/, wallet/, task/, quran/, alarms/)
+                    alarms, bedtime, report, programs, akhira-weeks, testaments, search, investments, settings…
+src/components/     UI building blocks (ui/, prayer/, bedtime/, calendar/, stats/, wallet/, task/, quran/, alarms/,
+                    search/, testaments/, investments/)
 src/lib/            logic, no UI:
   data/             encrypted local vault (SQLite) and record cipher
   ledger/           accounts, entries, tasks, presets (nafilah, fasting), reasons, weekly Akhira points
@@ -97,6 +98,10 @@ src/lib/            logic, no UI:
   bedtime/          bedtime task and its notification
   reports/ programs/ day / week / month / year reports, improvement and recovery programs
   wallet/ stats/    finance, saving plans, debts, statistics (filters, charts, CSV export)
+  investments/      halal-only investments: capital accounts, records, expected vs real
+  testaments/       Testaments, built-in ayat / advice / athkar, scheduled notifications
+  search/           text folding (Arabic, Uthmani) and search over local records
+  profile/          profile photo (picked, resized, encrypted)
   sync/ session/    sync engine, sign-in, keys, app lock
 src/i18n/           Arabic, English, French
 modules/hisab-alarm Android native module: athan and alarms as alarm clocks with a full-screen page

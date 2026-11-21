@@ -11,3 +11,6 @@
 | [reports.md](reports.md) | Day / week / month / year reports, the rating estimate, notes, notifications; programs (improving / healing) and relapses |
 | [statistics.md](statistics.md) | The Statistics tab: filters, periods, comparison, sections, saved filters, CSV export |
 | [bedtime.md](bedtime.md) | The "Go to bed" task: marking the time slept, late reasons, the Late bedtime Thanb, notifications |
+| [testaments.md](testaments.md) | Testaments (توصيات): Jannah / Nar reminders, Akhira / Dunya advice and athkar as scheduled notifications; verified built-in ayat |
+| [search.md](search.md) | Global and per-screen search, Arabic and Uthmani-aware matching, offline Quran search |
+| [investments.md](investments.md) | Halal-only investments (trade, mudaraba, musharaka, ijara): capital accounts, records as ledger entries, expected vs real statistics |

@@ -33,7 +33,8 @@ export default function ZakatScreen() {
       !account.archived &&
       (account.unit.kind === 'money' || account.unit.kind === 'gold') &&
       account.fixed !== 'sadaqa' &&
-      account.fixed !== 'zakat',
+      account.fixed !== 'zakat' &&
+      !account.zakatExempt,
   );
   // Gold uses the price typed here (falls back to the gold exchange rate).
   const zakatRates = goldPrice ? [...rates.filter((r) => r.currency !== GOLD_CURRENCY), { currency: GOLD_CURRENCY, rate: goldPrice }] : rates;

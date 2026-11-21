@@ -230,7 +230,9 @@ export function useEverythingSearch(query: string): SearchGroup[] {
           subtitle: t('search.account'),
           href: (account.fixed
             ? { pathname: '/stats', params: { section: 'akhira' } }
-            : { pathname: '/wallet/account/[id]', params: { id: account.id } }) as Href,
+            : account.role === 'investment'
+              ? '/investments'
+              : { pathname: '/wallet/account/[id]', params: { id: account.id } }) as Href,
         })),
       ...categories
         .filter((category) => hit(folded, category.preset ? t(`wallet.defaultCategories.${category.preset}`) : category.name))

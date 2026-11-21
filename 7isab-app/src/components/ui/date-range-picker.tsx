@@ -1,6 +1,7 @@
 /**
  * Pick a from–to range on a month grid: tap the first day, then the last
  * (tapping before the first day starts again). Weeks start on Saturday.
+ * `single`: picks one day (start = end).
  */
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -23,12 +24,17 @@ export function DateRangePicker({
   end,
   onCancel,
   onConfirm,
+  single = false,
+  title,
 }: {
   visible: boolean;
   start?: string;
   end?: string;
   onCancel: () => void;
   onConfirm: (start: string, end: string) => void;
+  single?: boolean;
+  /** Replaces the default "Pick a range" title. */
+  title?: string;
 }) {
   const { t } = useTranslation();
   const theme = useTheme();
@@ -40,6 +46,11 @@ export function DateRangePicker({
   const [to, setTo] = useState<string | undefined>(end);
 
   const tap = (day: string) => {
+    if (single) {
+      setFrom(day);
+      setTo(day);
+      return;
+    }
     if (!from || to || day < from) {
       setFrom(day);
       setTo(undefined);
@@ -56,10 +67,10 @@ export function DateRangePicker({
             { backgroundColor: theme.background, borderColor: theme.border, paddingBottom: insets.bottom + Spacing.four },
           ]}>
           <AppText variant="heading" align="center">
-            {t('stats.range.pick')}
+            {title ?? t('stats.range.pick')}
           </AppText>
           <AppText variant="caption" color="textSecondary" align="center">
-            {from ? `${format.day(from, 'long')} → ${to ? format.day(to, 'long') : t('stats.range.pickEnd')}` : t('stats.range.pickStart')}
+            {single && from ? format.day(from, 'long') : from ? `${format.day(from, 'long')} → ${to ? format.day(to, 'long') : t('stats.range.pickEnd')}` : t('stats.range.pickStart')}
           </AppText>
 
           <View style={styles.nav}>

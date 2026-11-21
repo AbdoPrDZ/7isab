@@ -31,6 +31,7 @@ export const RecordTypes = {
   statsFilter: 'stats_filter',
   testament: 'testament',
   profile: 'profile',
+  investment: 'investment',
 } as const;
 
 export type FixedAccountKey = 'akhira' | 'thanb' | 'sadaqa' | 'zakat' | 'cash';
@@ -42,7 +43,8 @@ export type AccountUnit =
   | { kind: 'money'; currency?: string }
   | { kind: 'gold' };
 
-export type AccountRole = 'fixed' | 'wallet' | 'lent' | 'borrowed' | 'savings';
+/** `investment`: the capital of one investment (lib/investments), shown under Investments, not in the wallet list. */
+export type AccountRole = 'fixed' | 'wallet' | 'lent' | 'borrowed' | 'savings' | 'investment';
 
 export type Account = Doc & {
   name: string;
@@ -51,6 +53,8 @@ export type Account = Doc & {
   unit: AccountUnit;
   archived?: boolean;
   hidden?: boolean;
+  /** Left out of the zakat calculation (e.g. an asset rented out: zakat is due on the rent, not the asset). */
+  zakatExempt?: boolean;
   color?: string;
   order: number;
 };
@@ -90,6 +94,8 @@ export type Entry = Doc & {
   rate?: number;
   /** For loans: who the money was lent to / borrowed from. */
   person?: string;
+  /** Capital, profit, loss or withdrawal of an investment (lib/investments). */
+  investmentId?: string;
 };
 
 export type Rates = {

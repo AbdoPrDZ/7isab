@@ -156,6 +156,27 @@ Plan: [../plans/STARTUP.md](../plans/STARTUP.md). Tick a step only once it's don
 - [ ] AR / EN / FR strings — written, needs device test
 - [ ] Typecheck and lint pass (done); tested on a device
 
+### Testaments (plan §4.16)
+- [ ] Testaments list, editor and per-category schedule — written, needs device test
+- [ ] Notifications: seeded random times + fixed times, tap opens the Testament — written, needs device test
+- [x] 87 built-in (ayat verified against quran.com, advice, athkar)
+- [ ] AR / EN / FR strings; typecheck and lint pass (done); tested on a device
+
+### Search (plan §4.17)
+- [ ] Global search and per-screen search boxes — written, needs device test
+- [x] Arabic / Uthmani folding (31 ayat tested against quran.com)
+- [ ] Offline Quran download and index — written, needs device test
+- [ ] Typecheck and lint pass (done); tested on a device
+
+### Profile photo (plan §4.18)
+- [ ] Pick / take, crop, resize, encrypted record; Settings and Home — written, needs a 1.2.0 build and a device test
+
+### Investments (plan §4.19)
+- [ ] Halal-only kinds, rules card and halal checks — written, needs device test
+- [ ] Capital accounts and records as ledger entries (net worth, statistics, zakat) — written, needs device test
+- [ ] Statistics: expected vs real, ROI, yearly return, payback, chart (checked on a sample) — written, needs device test
+- [ ] AR / EN / FR strings; typecheck and lint pass (done); tested on a device
+
 ## Phase 4: Wallet
 - [ ] Accounts screen (create, archive, hide; any currency or gold) — written, needs device test
 - [ ] Income, expenses and transfers (with exchange rates between currencies) — written, needs device test

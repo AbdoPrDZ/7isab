@@ -40,7 +40,10 @@ export default function TransactionScreen() {
       account.fixed !== 'sadaqa' &&
       account.fixed !== 'zakat',
   );
-  const wallets = money.filter((account) => account.role !== 'lent' && account.role !== 'borrowed');
+  // Investment capital moves only through the investment screens.
+  const wallets = money.filter(
+    (account) => account.role !== 'lent' && account.role !== 'borrowed' && account.role !== 'investment',
+  );
   const lent = money.filter((account) => account.role === 'lent');
   const borrowed = money.filter((account) => account.role === 'borrowed');
   const cash = wallets.find((account) => account.fixed === 'cash') ?? wallets[0];

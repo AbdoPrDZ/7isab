@@ -47,7 +47,10 @@ export default function WalletScreen() {
   const found = useWalletSearch(deferredQuery);
   const searching = !!foldQuery(deferredQuery);
 
-  const moneyAccounts = accounts.filter((account) => account.unit.kind === 'money' || account.unit.kind === 'gold');
+  // Investment capital accounts are listed under Investments (they still count in net worth).
+  const moneyAccounts = accounts.filter(
+    (account) => (account.unit.kind === 'money' || account.unit.kind === 'gold') && account.role !== 'investment',
+  );
   const active = moneyAccounts.filter((account) => !account.archived);
   const archived = moneyAccounts.filter((account) => account.archived);
   const worth = useMemo(() => netWorth(accounts, balances, mainCurrency, rates), [accounts, balances, mainCurrency, rates]);
@@ -80,6 +83,7 @@ export default function WalletScreen() {
   };
 
   const links: [string, Href][] = [
+    [t('investments.title'), '/investments'],
     [t('wallet.goals'), '/wallet/goals'],
     [t('wallet.recurring'), '/wallet/recurring'],
     [t('stats.title'), { pathname: '/stats', params: { section: 'dunya' } }],

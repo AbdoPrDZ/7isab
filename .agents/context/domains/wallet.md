@@ -3,7 +3,7 @@
 **Status:** written, not yet tested on a device. Built on the ledger (see `ledger.md`): wallet events are ordinary entries.
 
 ## Accounts
-- Roles: `wallet`, `savings`, `lent` (money owed to the user, e.g. Debts), `borrowed`, plus `fixed` for the five fixed accounts.
+- Roles: `wallet`, `savings`, `lent` (money owed to the user, e.g. Debts), `borrowed`, `investment` (an investment's capital: listed under Investments, not in the wallet list or the transaction screen), plus `fixed` for the five fixed accounts.
 - Unit: money (a currency; none = main currency) or gold (grams). Accounts can be archived or hidden from totals.
 - **Starter accounts** from the user's notes are created once: CCP (DZD), EUR, Debts (lent), Gold, and "Debts I owe" (borrowed; added later, created once for existing users too through the `starter_owe` vault flag). They are normal accounts (renamable, archivable); while a starter keeps its original name it is shown translated (`untouchedStarterKey`: Debts → "Owed to me", Debts I owe → "I owe").
 
@@ -20,4 +20,6 @@
 - **Goals:** a target and the account holding the savings, with an optional **saving plan** (`lib/wallet/saving-plan.ts`): weekly / monthly / yearly, a fixed amount or "reach it in N periods" (amount computed, rounded up). Shows the amount still due this period, how far behind, and an estimated finish. It can also create a confirm-first repeating transfer (removed with the goal). Repeating items also support yearly.
 - **Net worth:** money and gold accounts in the main currency (gold via the `XAU_G` per-gram rate); Sadaqa + Zakat shown separately as "owed to the poor".
 - **Statistics:** the Statistics tab, see `statistics.md`. An account's screen opens it filtered to that account.
-- **Zakat calculator:** zakatable wealth (money and gold, not Sadaqa / Zakat) vs nisab = 85 g × gold price; 2.5 % due; hawl start date with a reminder after 354 days.
+- **Investments** (Wallet → Investments): halal only, see `investments.md`.
+- **Search:** wallet activity can be searched across all months (see `search.md`).
+- **Zakat calculator:** zakatable wealth (money and gold, not Sadaqa / Zakat, not `zakatExempt` accounts such as an asset rented out) vs nisab = 85 g × gold price; 2.5 % due; hawl start date with a reminder after 354 days.

@@ -6,6 +6,7 @@
 - `types.ts`: record types, `Account`, `Entry` (kind, date `YYYY-MM-DD`, lines `{account, amount}`), `Task`, `TaskProgress`, `Settings` (main currency, rates, `closedThrough`, fast-tap strictness), `SinType`, `ExchangeRate`.
 - `ledger.ts`: `ensureDefaults`, balances (sum of lines), actions (`logSin`, `payThanb`, `giveSadaqa`, `payZakat`, `transfer`, `addIncomeOrExpense`, `logFastTap`).
 - `tasks.ts`: `isDue`, progress per task per day, `closeFinishedDays` (end-of-day check), `addLinkedProgress` (Quran / athkar).
+- Account roles: `fixed`, `wallet`, `savings`, `lent`, `borrowed`, `investment` (an investment's capital, see `investments.md`). `account.zakatExempt` leaves an account out of the zakat calculation. `entry.investmentId` ties an entry to an investment.
 - `weekly.ts`: weekly Akhira points (`akhiraWeeks`, `useAkhiraWeeks`, `useWeeklyAkhira`, `useWeeklyAkhiraEnabled`); screen `app/(app)/akhira-weeks.tsx`.
 
 ## Purpose

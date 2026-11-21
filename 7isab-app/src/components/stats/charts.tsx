@@ -127,6 +127,8 @@ export function FlowChart({
   formatValue,
   monthLabel,
   netLabel,
+  inColor,
+  outColor,
 }: {
   data: FlowPoint[];
   inLabel: string;
@@ -134,8 +136,13 @@ export function FlowChart({
   formatValue: (value: number) => string;
   monthLabel: (month: string, short: boolean) => string;
   netLabel: string;
+  /** Bar colours (default: income / expense colours). */
+  inColor?: string;
+  outColor?: string;
 }) {
   const theme = useTheme();
+  const inFill = inColor ?? theme.chartIn;
+  const outFill = outColor ?? theme.chartOut;
   const [selected, setSelected] = useState(data.length - 1);
   const max = Math.max(1, ...data.flatMap((point) => [point.inflow, point.outflow]));
   const point = data[Math.min(selected, data.length - 1)];
@@ -144,11 +151,11 @@ export function FlowChart({
   return (
     <View style={styles.flow}>
       <View style={styles.legend}>
-        <View style={[styles.legendDot, { backgroundColor: theme.chartIn }]} />
+        <View style={[styles.legendDot, { backgroundColor: inFill }]} />
         <AppText variant="caption" color="textSecondary">
           {inLabel}
         </AppText>
-        <View style={[styles.legendDot, { backgroundColor: theme.chartOut }]} />
+        <View style={[styles.legendDot, { backgroundColor: outFill }]} />
         <AppText variant="caption" color="textSecondary">
           {outLabel}
         </AppText>
@@ -169,14 +176,14 @@ export function FlowChart({
                   style={[
                     styles.bar,
                     narrow && styles.barNarrow,
-                    { height: `${(item.inflow / max) * 100}%`, backgroundColor: theme.chartIn, opacity: active ? 1 : 0.75 },
+                    { height: `${(item.inflow / max) * 100}%`, backgroundColor: inFill, opacity: active ? 1 : 0.75 },
                   ]}
                 />
                 <View
                   style={[
                     styles.bar,
                     narrow && styles.barNarrow,
-                    { height: `${(item.outflow / max) * 100}%`, backgroundColor: theme.chartOut, opacity: active ? 1 : 0.75 },
+                    { height: `${(item.outflow / max) * 100}%`, backgroundColor: outFill, opacity: active ? 1 : 0.75 },
                   ]}
                 />
               </View>
@@ -199,14 +206,14 @@ export function FlowChart({
             {monthLabel(point.month, false)}
           </AppText>
           <View style={styles.detailRow}>
-            <View style={[styles.legendDot, { backgroundColor: theme.chartIn }]} />
+            <View style={[styles.legendDot, { backgroundColor: inFill }]} />
             <AppText variant="caption" color="textSecondary" style={styles.flex}>
               {inLabel}
             </AppText>
             <AppText variant="label">{formatValue(point.inflow)}</AppText>
           </View>
           <View style={styles.detailRow}>
-            <View style={[styles.legendDot, { backgroundColor: theme.chartOut }]} />
+            <View style={[styles.legendDot, { backgroundColor: outFill }]} />
             <AppText variant="caption" color="textSecondary" style={styles.flex}>
               {outLabel}
             </AppText>
