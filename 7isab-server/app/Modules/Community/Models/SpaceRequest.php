@@ -1,10 +1,23 @@
 <?php
 
-namespace App\Models\Modules\Community\Models;
+namespace App\Modules\Community\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class SpaceRequest extends Model
 {
-    //
+    protected $table = 'space_requests';
+
+    protected $fillable = ['requester_id', 'type', 'name', 'purpose', 'goals', 'content_plan', 'join_policy', 'audience', 'status', 'admin_note', 'reviewed_by'];
+
+    public function requester(): BelongsTo
+    {
+        return $this->belongsTo(CommunityProfile::class);
+    }
+
+    public function reviewer(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'reviewed_by');
+    }
 }
